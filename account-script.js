@@ -17,7 +17,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 document.addEventListener("DOMContentLoaded", () => {
-    if (typeof lucide !== "undefined") lucide.createIcons();
+    initLucideIcons();
 
     // Переключение вкладок (Логин / Регистрация)
     const tabLoginBtn = document.getElementById("tab-login-btn");

@@ -1,7 +1,4 @@
-// Inicjalizacja ikon w całym dokumencie
-if (window.lucide) {
-  lucide.createIcons();
-}
+initLucideIcons();
 
 // --- GLOBAL SHOPPING BAG STATE ---
 let cart = JSON.parse(localStorage.getItem('jellyCart')) || [];
@@ -12,7 +9,7 @@ function createFloatingParticles() {
   if (!container) return;
 
   const particleCount = 15; // Reduced from 20 for better performance
-  const colors = ['#ff8fa3', '#ff4d6d', '#93e1d8', '#ffd700', '#ff6b6b'];
+  const colors = JELLY_COLORS;
   const fragment = document.createDocumentFragment();
 
   for (let i = 0; i < particleCount; i++) {
@@ -36,23 +33,14 @@ createFloatingParticles();
 const jellyObject = document.getElementById('jelly-core-object');
 if (jellyObject) {
   jellyObject.addEventListener('click', () => {
-    gsap.to(jellyObject, {
-      scale: 0.6,
-      scaleX: 1.4,
-      scaleY: 0.5,
-      rotation: Math.random() * 20 - 10,
-      duration: 0.12,
-      ease: "power2.out",
-      onComplete: () => {
-        gsap.to(jellyObject, {
-          scale: 1,
-          scaleX: 1,
-          scaleY: 1,
-          rotation: 0,
-          duration: 0.6,
-          ease: "elastic.out(1, 0.3)"
-        });
-      }
+    squishElement(jellyObject, {
+      squishScale: 0.6,
+      stretchX: 1.4,
+      stretchY: 0.5,
+      rotationRange: 20,
+      squishDuration: 0.12,
+      bounceDuration: 0.6,
+      elasticity: 0.3,
     });
 
     const pressureFill = document.getElementById('pressure-fill');
@@ -72,23 +60,7 @@ if (jellyObject) {
     }
   });
 
-  jellyObject.addEventListener('mouseenter', () => {
-    gsap.to(jellyObject, {
-      scale: 1.1,
-      rotation: -3,
-      duration: 0.4,
-      ease: "power2.out"
-    });
-  });
-
-  jellyObject.addEventListener('mouseleave', () => {
-    gsap.to(jellyObject, {
-      scale: 1,
-      rotation: 0,
-      duration: 0.4,
-      ease: "power2.out"
-    });
-  });
+  setupHoverAnimation(jellyObject, jellyObject, { hoverScale: 1.1, hoverRotation: -3 });
 
   // Оптимизация: используем requestAnimationFrame для mousemove
   let ticking = false;
@@ -180,31 +152,29 @@ if (document.querySelector(".visual-scroller-arena")) {
 
 // --- CONFETTI EFFECT FOR MYSTERY BOX ---
 function createConfetti() {
-  const colors = ['#ff8fa3', '#ff4d6d', '#93e1d8', '#ffd700', '#ff6b6b'];
   const confettiCount = 50;
-  
+
   for (let i = 0; i < confettiCount; i++) {
-    const confetti = document.createElement('div');
-    confetti.style.cssText = `
-      position: fixed;
-      width: ${Math.random() * 10 + 5}px;
-      height: ${Math.random() * 10 + 5}px;
-      background: ${colors[Math.floor(Math.random() * colors.length)]};
-      left: ${Math.random() * 100}vw;
-      top: -20px;
-      border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
-      z-index: 9999;
-      pointer-events: none;
-    `;
-    document.body.appendChild(confetti);
-    
-    gsap.to(confetti, {
+    const size = Math.random() * 10 + 5;
+    const el = createParticleElement({
+      x: 0,
+      y: 0,
+      size,
+      color: randomFrom(JELLY_COLORS),
+      extraStyles: `
+        left: ${Math.random() * 100}vw;
+        top: -20px;
+        border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+      `,
+    });
+
+    gsap.to(el, {
       y: window.innerHeight + 20,
       x: (Math.random() - 0.5) * 200,
       rotation: Math.random() * 720,
       duration: Math.random() * 2 + 1,
-      ease: "power1.out",
-      onComplete: () => confetti.remove()
+      ease: 'power1.out',
+      onComplete: () => el.remove(),
     });
   }
 }
@@ -243,36 +213,12 @@ buyButtons.forEach(btn => {
 
 function createButtonParticles(btn) {
   const rect = btn.getBoundingClientRect();
-  const colors = ['#ff8fa3', '#ff4d6d', '#93e1d8', '#ffd700'];
-
-  for (let i = 0; i < 8; i++) {
-    const particle = document.createElement('div');
-    particle.style.cssText = `
-      position: fixed;
-      width: 8px;
-      height: 8px;
-      background: ${colors[Math.floor(Math.random() * colors.length)]};
-      border-radius: 50%;
-      left: ${rect.left + rect.width / 2}px;
-      top: ${rect.top + rect.height / 2}px;
-      z-index: 9999;
-      pointer-events: none;
-    `;
-    document.body.appendChild(particle);
-
-    const angle = (Math.PI * 2 * i) / 8;
-    const distance = 50 + Math.random() * 30;
-
-    gsap.to(particle, {
-      x: Math.cos(angle) * distance,
-      y: Math.sin(angle) * distance,
-      opacity: 0,
-      scale: 0,
-      duration: 0.6,
-      ease: "power2.out",
-      onComplete: () => particle.remove()
-    });
-  }
+  spawnParticleBurst({
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2,
+    count: 8,
+    spread: 50,
+  });
 }
 
 // --- СВЕРХ-УНИВЕРСАЛЬНАЯ ФУНКЦИЯ КОРЗИНЫ (РАБОТАЕТ НА ВСЕХ СТРАНИЦАХ) ---
@@ -461,23 +407,7 @@ const productCards = document.querySelectorAll('.jelly-product-card');
 productCards.forEach(card => {
   const img = card.querySelector('.prod-img');
   if (img) {
-    card.addEventListener('mouseenter', () => {
-      gsap.to(img, {
-        scale: 1.2,
-        rotation: 10,
-        duration: 0.4,
-        ease: "power2.out"
-      });
-    });
-
-    card.addEventListener('mouseleave', () => {
-      gsap.to(img, {
-        scale: 1,
-        rotation: 0,
-        duration: 0.4,
-        ease: "power2.out"
-      });
-    });
+    setupHoverAnimation(card, img, { hoverScale: 1.2, hoverRotation: 10 });
   }
 });
 
@@ -491,51 +421,24 @@ if (interactiveDumpling && squishCountEl) {
     squishCount++;
     squishCountEl.textContent = squishCount;
 
-    gsap.to(interactiveDumpling, {
-      scale: 0.7,
-      scaleX: 1.3,
-      scaleY: 0.6,
-      rotation: Math.random() * 20 - 10,
-      duration: 0.1,
-      ease: "power2.out",
-      onComplete: () => {
-        gsap.to(interactiveDumpling, {
-          scale: 1,
-          scaleX: 1,
-          scaleY: 1,
-          rotation: 0,
-          duration: 0.5,
-          ease: "elastic.out(1, 0.4)"
-        });
-      }
+    squishElement(interactiveDumpling, {
+      squishScale: 0.7,
+      stretchX: 1.3,
+      stretchY: 0.6,
+      rotationRange: 20,
+      squishDuration: 0.1,
+      bounceDuration: 0.5,
+      elasticity: 0.4,
     });
 
-    for (let i = 0; i < 5; i++) {
-      const particle = document.createElement('div');
-      particle.style.cssText = `
-        position: fixed;
-        width: 10px;
-        height: 10px;
-        background: ${['#ff8fa3', '#ff4d6d', '#93e1d8', '#ffd700'][Math.floor(Math.random() * 4)]};
-        border-radius: 50%;
-        left: ${interactiveDumpling.getBoundingClientRect().left + interactiveDumpling.offsetWidth / 2}px;
-        top: ${interactiveDumpling.getBoundingClientRect().top + interactiveDumpling.offsetHeight / 2}px;
-        z-index: 9999;
-        pointer-events: none;
-      `;
-      document.body.appendChild(particle);
-
-      const angle = (Math.PI * 2 * i) / 5;
-      gsap.to(particle, {
-        x: Math.cos(angle) * 80,
-        y: Math.sin(angle) * 80,
-        opacity: 0,
-        scale: 0,
-        duration: 0.6,
-        ease: "power2.out",
-        onComplete: () => particle.remove()
-      });
-    }
+    const dRect = interactiveDumpling.getBoundingClientRect();
+    spawnParticleBurst({
+      x: dRect.left + interactiveDumpling.offsetWidth / 2,
+      y: dRect.top + interactiveDumpling.offsetHeight / 2,
+      count: 5,
+      size: 10,
+      spread: 80,
+    });
 
     if (squishCount === 10) {
       createConfetti();
