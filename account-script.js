@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc, query, where, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA9AwC8-NSVPD-e3fpjq7cphquw-d80yHk",
@@ -56,14 +56,21 @@ document.addEventListener("DOMContentLoaded", () => {
                         await setDoc(doc(db, "accounts", userCredential.user.uid), {
                             email: email,
                             createdAt: new Date().toISOString(),
-                            squishCount: 0
+                            squishCount: 0,
+                            cart: []
                         });
                         alert("Konto stworzone pomyślnie! Witamy w drop-strefie.");
+                        // Перезагружаем страницу чтобы показать дашборд
+                        setTimeout(() => location.reload(), 1000);
                     })
                     .catch(err => alert("Błąd rejestracji: " + err.message));
             } else {
                 signInWithEmailAndPassword(auth, email, pass)
-                    .then(() => alert("Pomyślnie zalogowano!"))
+                    .then(() => {
+                        alert("Pomyślnie zalogowano!");
+                        // Перезагружаем страницу чтобы показать дашборд
+                        setTimeout(() => location.reload(), 1000);
+                    })
                     .catch(err => alert("Błąd logowania: " + err.message));
             }
         });
@@ -90,6 +97,8 @@ document.addEventListener("DOMContentLoaded", () => {
             
             // Загружаем его личные заказы из Firestore
             fetchUserOrders(user.uid);
+            // Загружаем количество нажатий
+            fetchUserSquishCount(user.uid);
         } else {
             authGateBox.style.display = "block";
             accountDashboard.style.display = "none";
@@ -145,6 +154,37 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             console.error("Error fetching orders: ", error);
             feedWrapper.innerHTML = `<p style="color:red; text-align:center;">Błąd ładowania danych.</p>`;
+        }
+    }
+
+    // ФУНКЦИЯ ВЫТЯГИВАНИЯ КОЛИЧЕСТВА НАЖАТИЙ ЮЗЕРА ИЗ FIRESTORE
+    async function fetchUserSquishCount(uid) {
+        try {
+            const userDocRef = doc(db, "accounts", uid);
+            const userDoc = await getDoc(userDocRef);
+            
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const squishCount = userData.squishCount || 0;
+                
+                // Добавляем или обновляем badge для squish count
+                let squishBadge = document.getElementById("squish-count-badge");
+                if (!squishBadge) {
+                    const statsPills = document.querySelector(".user-stats-pills");
+                    if (statsPills) {
+                        const newBadge = document.createElement("div");
+                        newBadge.className = "stat-pill";
+                        newBadge.id = "squish-count-badge";
+                        newBadge.style.marginTop = "10px";
+                        newBadge.innerHTML = `Liczba ścisknięć: <strong style="color:var(--pink-jelly-deep)">${squishCount}</strong>`;
+                        statsPills.appendChild(newBadge);
+                    }
+                } else {
+                    squishBadge.innerHTML = `Liczba ścisknięć: <strong style="color:var(--pink-jelly-deep)">${squishCount}</strong>`;
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching squish count:", error);
         }
     }
 });
