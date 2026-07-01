@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zamówienie // TWOJ GNIOTEK</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css?v=1.1">
+</head>
+<body class="jelly-universe">
+
+    <div class="bg-overlay"></div>
+
+    <header class="jelly-nav">
+        <div class="jelly-container header-flex">
+            <a href="index.html" class="brand-jelly-logo">TWOJ GNIOTEK<span>•</span></a>
+            <a href="index.html" class="mega-nav-item">← Wróć do sklepu</a>
+            <a href="checkout.html" class="jelly-bag-trigger">
+                <div class="bag-icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="jelly-bag-icon">
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+                        <path d="M3 6h18"/>
+                        <path d="M16 10a4 4 0 0 1-8 0"/>
+                    </svg>
+                    <span id="bag-count" class="jelly-bag-counter">0</span>
+                </div>
+            </a>
+        </div>
+    </header>
+
+    <div class="checkout-page">
+        <div class="jelly-container">
+            <div class="checkout-grid">
+                <!-- Cart Summary -->
+                <div class="checkout-cart-summary">
+                    <h2>🛒 Twój Koszyk</h2>
+                    <div id="checkout-cart-items"></div>
+                    <div class="checkout-total">
+                        <span>Do zapłaty:</span>
+                        <strong id="checkout-total-price">0,00 PLN</strong>
+                    </div>
+                </div>
+
+                <!-- Checkout Form -->
+                <div class="checkout-form-container">
+                    <h2>📝 Dane do wysyłki</h2>
+                    
+                    <form id="checkout-form">
+                        <div class="form-section">
+                            <h4>👤 Dane osobowe</h4>
+                            <input type="text" id="c-name" class="jelly-input" placeholder="Imię" required>
+                            <input type="text" id="c-surname" class="jelly-input" placeholder="Nazwisko" style="margin-top:12px;" required>
+                            <input type="email" id="c-email" class="jelly-input" placeholder="Email" style="margin-top:12px;" required>
+                            <input type="tel" id="c-phone" class="jelly-input" placeholder="Telefon (+48)" style="margin-top:12px;" required>
+                        </div>
+
+                        <div class="form-section">
+                            <h4>📍 Adres dostawy</h4>
+                            <input type="text" id="c-street" class="jelly-input" placeholder="Ulica" required>
+                            <input type="text" id="c-house-number" class="jelly-input" placeholder="Numer domu" style="margin-top:12px;" required>
+                            <input type="text" id="c-apartment" class="jelly-input" placeholder="Numer mieszkania (opcjonalnie)" style="margin-top:12px;">
+                            <input type="text" id="c-postal-code" class="jelly-input" placeholder="Kod pocztowy" style="margin-top:12px;" required>
+                            <input type="text" id="c-city" class="jelly-input" placeholder="Miasto" style="margin-top:12px;" required>
+                        </div>
+
+                        <div class="form-section">
+                            <h4>📦 Wybór dostawy</h4>
+                            <select id="c-delivery" class="jelly-input" required>
+                                <option value="">Wybierz metodę dostawy</option>
+                                <option value="inpost">InPost Paczkomaty</option>
+                                <option value="poczta">Poczta Polska</option>
+                                <option value="orlen">Orlen Paczka</option>
+                                <option value="dpd">DPD Kurier</option>
+                            </select>
+                            <div id="c-parcel-points" style="display: none; margin-top: 15px;">
+                                <select id="c-parcel-point" class="jelly-input">
+                                    <option value="">Wybierz punkt odbioru</option>
+                                </select>
+                            </div>
+                            <div id="c-parcel-number-container" style="display: none; margin-top: 15px;">
+                                <input type="text" id="c-parcel-number" class="jelly-input" placeholder="Wpisz numer swojego paczkomatu" required>
+                            </div>
+                            <input type="text" id="c-paczkomat" class="jelly-input" placeholder="Numer twojego paczkomatu" style="margin-top:12px;" required>
+                        </div>
+
+                        <button type="submit" class="jelly-btn-submit">Złóż zamówienie</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        // Load cart from localStorage
+        let cart = JSON.parse(localStorage.getItem('jellyCart')) || [];
+        
+        function updateCheckoutCart() {
+            const cartItemsContainer = document.getElementById('checkout-cart-items');
+            const totalPriceEl = document.getElementById('checkout-total-price');
+            
+            if (!cartItemsContainer || !totalPriceEl) return;
+            
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = `<p style="text-align:center; color:#8c767a; margin-top:40px;">Twój koszyk jest pusty.</p>`;
+                totalPriceEl.textContent = '0,00 PLN';
+                return;
+            }
+            
+            cartItemsContainer.innerHTML = '';
+            let total = 0;
+            
+            cart.forEach((item, index) => {
+                total += item.price;
+                const row = document.createElement('div');
+                row.className = 'checkout-cart-item';
+                row.innerHTML = `
+                    <div class="checkout-item-info">
+                        <span class="checkout-item-name">${item.name}</span>
+                        <span class="checkout-item-price">${item.price.toFixed(2)} PLN</span>
+                    </div>
+                    <button class="checkout-remove-btn" data-index="${index}">✕</button>
+                `;
+                cartItemsContainer.appendChild(row);
+            });
+            
+            totalPriceEl.textContent = `${total.toFixed(2)} PLN`;
+            
+            // Add remove button functionality
+            document.querySelectorAll('.checkout-remove-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const index = parseInt(btn.getAttribute('data-index'));
+                    cart.splice(index, 1);
+                    localStorage.setItem('jellyCart', JSON.stringify(cart));
+                    updateCheckoutCart();
+                });
+            });
+        }
+        
+        // Initialize checkout cart
+        updateCheckoutCart();
+        
+        // Update cart count in header if exists
+        const checkoutBagCount = document.getElementById('bag-count');
+        if (checkoutBagCount) {
+            checkoutBagCount.textContent = cart.length;
+        }
+        
+        // Form submission
+        document.getElementById('checkout-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('🎉 Zamówienie złożone! Dziękujemy za zakup!');
+            cart = [];
+            localStorage.setItem('jellyCart', JSON.stringify(cart));
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
