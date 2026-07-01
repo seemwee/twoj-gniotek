@@ -11,8 +11,9 @@ function createFloatingParticles() {
   const container = document.getElementById('particles-container');
   if (!container) return;
 
-  const particleCount = 20;
+  const particleCount = 15; // Reduced from 20 for better performance
   const colors = ['#ff8fa3', '#ff4d6d', '#93e1d8', '#ffd700', '#ff6b6b'];
+  const fragment = document.createDocumentFragment();
 
   for (let i = 0; i < particleCount; i++) {
     const particle = document.createElement('div');
@@ -25,8 +26,9 @@ function createFloatingParticles() {
       animation-delay: ${Math.random() * 15}s;
       animation-duration: ${Math.random() * 10 + 10}s;
     `;
-    container.appendChild(particle);
+    fragment.appendChild(particle);
   }
+  container.appendChild(fragment);
 }
 createFloatingParticles();
 
@@ -88,28 +90,43 @@ if (jellyObject) {
     });
   });
 
+  // Оптимизация: используем requestAnimationFrame для mousemove
+  let ticking = false;
   document.addEventListener('mousemove', (e) => {
-    const moveX = (e.clientX - window.innerWidth / 2) / 50;
-    const moveY = (e.clientY - window.innerHeight / 2) / 50;
-    gsap.to(jellyObject, {
-      x: moveX,
-      y: moveY,
-      duration: 0.5,
-      ease: "power2.out"
-    });
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        const moveX = (e.clientX - window.innerWidth / 2) / 50;
+        const moveY = (e.clientY - window.innerHeight / 2) / 50;
+        gsap.to(jellyObject, {
+          x: moveX,
+          y: moveY,
+          duration: 0.5,
+          ease: "power2.out"
+        });
+        ticking = false;
+      });
+      ticking = true;
+    }
   });
 }
 
 // --- INTELLIGENT JELLY MOUSE POINTER ---
 const cursor = document.getElementById('jelly-pointer');
 if (cursor && window.innerWidth > 768) {
+  let cursorTicking = false;
   window.addEventListener('mousemove', (e) => {
-      gsap.to(cursor, {
+    if (!cursorTicking) {
+      window.requestAnimationFrame(() => {
+        gsap.to(cursor, {
           x: e.clientX,
           y: e.clientY,
           duration: 0.1,
           ease: "power2.out"
+        });
+        cursorTicking = false;
       });
+      cursorTicking = true;
+    }
   });
 }
 
