@@ -1,5 +1,15 @@
 import { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, collection, getDocs, query, where } from "./firebase.js";
 
+function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof lucide !== "undefined") lucide.createIcons();
 
@@ -54,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     onAuthStateChanged(auth, (user) => {
         if (user) {
             authGateBox.style.display = "none";
-            accountDashboard.style.style.display = "grid";
+            accountDashboard.style.display = "grid";
             userEmailDisplay.textContent = user.email;
             
             // Загружаем его личные заказы из Firestore
@@ -91,21 +101,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 const order = doc.data();
                 
                 // Рендерим список купленных товаров в строчку
-                const itemsHtml = order.items.map(i => `• <strong>${i.name}</strong> (${i.price.toFixed(2)} PLN)`).join("<br>");
+                const itemsHtml = order.items.map(i => `• <strong>${escapeHtml(i.name)}</strong> (${Number(i.price).toFixed(2)} PLN)`).join("<br>");
 
                 const card = document.createElement("div");
                 card.className = "db-order-card";
                 card.innerHTML = `
                     <div class="order-card-top">
-                        <span>Data: <strong>${order.date || 'Dziś'}</strong></span>
+                        <span>Data: <strong>${escapeHtml(order.date) || 'Dziś'}</strong></span>
                         <span class="order-status-badge">Weryfikacja InPost</span>
                     </div>
                     <div>
                         <div style="font-size:0.95rem; margin-bottom: 8px;">${itemsHtml}</div>
-                        <div style="font-size:0.85rem; color:var(--text-muted);">Dostawa na adres / Paczkomat: ${order.address}</div>
+                        <div style="font-size:0.85rem; color:var(--text-muted);">Dostawa na adres / Paczkomat: ${escapeHtml(order.address)}</div>
                     </div>
                     <div style="text-align: right; font-weight:700; border-top:1px solid rgba(0,0,0,0.03); padding-top:10px;">
-                        Suma: <span style="color:var(--pink-jelly-deep); font-size:1.1rem;">${order.totalPrice}</span>
+                        Suma: <span style="color:var(--pink-jelly-deep); font-size:1.1rem;">${escapeHtml(order.totalPrice)}</span>
                     </div>
                 `;
                 feedWrapper.appendChild(card);
