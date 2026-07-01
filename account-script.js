@@ -1,4 +1,20 @@
-import { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, collection, getDocs, query, where } from "./firebase.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA9AwC8-NSVPD-e3fpjq7cphquw-d80yHk",
+  authDomain: "twoj-gniotek.firebaseapp.com",
+  projectId: "twoj-gniotek",
+  storageBucket: "twoj-gniotek.firebasestorage.app",
+  messagingSenderId: "70839458696",
+  appId: "1:70839458696:web:8c2ce646fdce9218f6b83d",
+  measurementId: "G-HKW9ZJ9RQK"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof lucide !== "undefined") lucide.createIcons();
@@ -9,42 +25,57 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnExecuteAuth = document.getElementById("btn-execute-auth");
     let currentAuthMode = "login"; // по умолчанию режим входа
 
-    tabLoginBtn.addEventListener("click", () => {
-        currentAuthMode = "login";
-        tabLoginBtn.classList.add("active");
-        tabRegisterBtn.classList.remove("active");
-        btnExecuteAuth.textContent = "Zaloguj się";
-    });
+    if (tabLoginBtn && tabRegisterBtn && btnExecuteAuth) {
+        tabLoginBtn.addEventListener("click", () => {
+            currentAuthMode = "login";
+            tabLoginBtn.classList.add("active");
+            tabRegisterBtn.classList.remove("active");
+            btnExecuteAuth.textContent = "Zaloguj się";
+        });
 
-    tabRegisterBtn.addEventListener("click", () => {
-        currentAuthMode = "register";
-        tabRegisterBtn.classList.add("active");
-        tabLoginBtn.classList.remove("active");
-        btnExecuteAuth.textContent = "Utwórz konto dropu";
-    });
+        tabRegisterBtn.addEventListener("click", () => {
+            currentAuthMode = "register";
+            tabRegisterBtn.classList.add("active");
+            tabLoginBtn.classList.remove("active");
+            btnExecuteAuth.textContent = "Utwórz konto dropu";
+        });
+    }
 
     // Экзекуция кнопки авторизации
-    btnExecuteAuth.addEventListener("click", () => {
-        const email = document.getElementById("auth-email").value.trim();
-        const pass = document.getElementById("auth-password").value;
+    if (btnExecuteAuth) {
+        btnExecuteAuth.addEventListener("click", () => {
+            const email = document.getElementById("auth-email").value.trim();
+            const pass = document.getElementById("auth-password").value;
 
-        if (!email || !pass) return alert("Wprowadź dane!");
+            if (!email || !pass) return alert("Wprowadź dane!");
 
-        if (currentAuthMode === "register") {
-            createUserWithEmailAndPassword(auth, email, pass)
-                .then(() => alert("Konto stworzone pomyślnie! Witamy w drop-strefie."))
-                .catch(err => alert("Błąd rejestracji: " + err.message));
-        } else {
-            signInWithEmailAndPassword(auth, email, pass)
-                .then(() => alert("Pomyślnie zalogowano!"))
-                .catch(err => alert("Błąd logowania: " + err.message));
-        }
-    });
+            if (currentAuthMode === "register") {
+                createUserWithEmailAndPassword(auth, email, pass)
+                    .then(async (userCredential) => {
+                        // Создаем документ пользователя в Firestore
+                        await setDoc(doc(db, "accounts", userCredential.user.uid), {
+                            email: email,
+                            createdAt: new Date().toISOString(),
+                            squishCount: 0
+                        });
+                        alert("Konto stworzone pomyślnie! Witamy w drop-strefie.");
+                    })
+                    .catch(err => alert("Błąd rejestracji: " + err.message));
+            } else {
+                signInWithEmailAndPassword(auth, email, pass)
+                    .then(() => alert("Pomyślnie zalogowano!"))
+                    .catch(err => alert("Błąd logowania: " + err.message));
+            }
+        });
+    }
 
     // Выход из системы
-    document.getElementById("btn-logout").addEventListener("click", () => {
-        signOut(auth).then(() => alert("Wylogowano z panelu."));
-    });
+    const btnLogout = document.getElementById("btn-logout");
+    if (btnLogout) {
+        btnLogout.addEventListener("click", () => {
+            signOut(auth).then(() => alert("Wylogowano z panelu."));
+        });
+    }
 
     // МОНИТОРИНГ СЕССИИ ЮЗЕРА
     const authGateBox = document.getElementById("auth-gate-box");
@@ -54,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
     onAuthStateChanged(auth, (user) => {
         if (user) {
             authGateBox.style.display = "none";
-            accountDashboard.style.style.display = "grid";
+            accountDashboard.style.display = "grid";
             userEmailDisplay.textContent = user.email;
             
             // Загружаем его личные заказы из Firestore
