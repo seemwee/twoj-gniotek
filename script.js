@@ -1,4 +1,14 @@
-// Inicjalizacja ikon w całym dokumencie
+// --- HTML SANITIZATION HELPER ---
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 if (window.lucide) {
   lucide.createIcons();
 }
@@ -306,7 +316,9 @@ function updateCartLayout() {
       const isCheckout = !!document.getElementById('checkout-cart-items');
       row.className = isCheckout ? 'checkout-cart-item' : 'cart-item-row';
       
-      const imgTag = item.img ? `<img src="${item.img}" alt="${item.name}" class="cart-item-img">` : '<div class="cart-item-img" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:#fff;border-radius:8px;">📦</div>';
+      const safeName = escapeHtml(item.name);
+      const safeImg = escapeHtml(item.img);
+      const imgTag = item.img ? `<img src="${safeImg}" alt="${safeName}" class="cart-item-img">` : '<div class="cart-item-img" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:#fff;border-radius:8px;">📦</div>';
 
       // Если мы на странице оформления заказа — добавляем кнопку удаления товара (крестик)
       const actionButton = isCheckout ? `<button class="checkout-remove-btn" data-index="${index}">✕</button>` : '';
@@ -315,7 +327,7 @@ function updateCartLayout() {
         <div class="cart-item-info">
             ${imgTag}
             <div class="checkout-item-info">
-                <span class="checkout-item-name">${item.name}</span>
+                <span class="checkout-item-name">${safeName}</span>
                 ${isCheckout ? `<span class="checkout-item-price">${item.price.toFixed(2)} PLN</span>` : ''}
             </div>
         </div>
