@@ -4,7 +4,13 @@ if (window.lucide) {
 }
 
 // --- GLOBAL SHOPPING BAG STATE ---
-let cart = JSON.parse(localStorage.getItem('jellyCart')) || [];
+let cart = [];
+try {
+  cart = JSON.parse(localStorage.getItem('jellyCart')) || [];
+} catch (e) {
+  console.error('Failed to parse cart data from localStorage:', e);
+  localStorage.removeItem('jellyCart');
+}
 
 // --- FLOATING PARTICLES BACKGROUND ---
 function createFloatingParticles() {
@@ -114,7 +120,7 @@ if (cursor && window.innerWidth > 768) {
 }
 
 // --- GSAP KINETIC INTERACTION ARENA SYSTEM ---
-if (document.querySelector(".visual-scroller-arena")) {
+if (document.querySelector(".visual-scroller-arena") && window.gsap && window.ScrollTrigger) {
   gsap.registerPlugin(ScrollTrigger);
 
   const arenaTimeline = gsap.timeline({
@@ -358,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // --- SCROLL ANIMATIONS FOR NEW SECTIONS ---
-if (document.querySelector(".catalog-jelly-section") || document.querySelector(".interactive-ending")) {
+if ((document.querySelector(".catalog-jelly-section") || document.querySelector(".interactive-ending")) && window.gsap && window.ScrollTrigger) {
   if (window.innerWidth > 768) {
     gsap.from(".jelly-product-card", {
       scrollTrigger: {
