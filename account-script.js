@@ -9,42 +9,60 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnExecuteAuth = document.getElementById("btn-execute-auth");
     let currentAuthMode = "login"; // по умолчанию режим входа
 
-    tabLoginBtn.addEventListener("click", () => {
-        currentAuthMode = "login";
-        tabLoginBtn.classList.add("active");
-        tabRegisterBtn.classList.remove("active");
-        btnExecuteAuth.textContent = "Zaloguj się";
-    });
+    if (tabLoginBtn) {
+        tabLoginBtn.addEventListener("click", () => {
+            currentAuthMode = "login";
+            tabLoginBtn.classList.add("active");
+            if (tabRegisterBtn) tabRegisterBtn.classList.remove("active");
+            if (btnExecuteAuth) btnExecuteAuth.textContent = "Zaloguj się";
+        });
+    }
 
-    tabRegisterBtn.addEventListener("click", () => {
-        currentAuthMode = "register";
-        tabRegisterBtn.classList.add("active");
-        tabLoginBtn.classList.remove("active");
-        btnExecuteAuth.textContent = "Utwórz konto dropu";
-    });
+    if (tabRegisterBtn) {
+        tabRegisterBtn.addEventListener("click", () => {
+            currentAuthMode = "register";
+            tabRegisterBtn.classList.add("active");
+            if (tabLoginBtn) tabLoginBtn.classList.remove("active");
+            if (btnExecuteAuth) btnExecuteAuth.textContent = "Utwórz konto dropu";
+        });
+    }
 
     // Экзекуция кнопки авторизации
-    btnExecuteAuth.addEventListener("click", () => {
-        const email = document.getElementById("auth-email").value.trim();
-        const pass = document.getElementById("auth-password").value;
+    if (btnExecuteAuth) {
+        btnExecuteAuth.addEventListener("click", () => {
+            const emailEl = document.getElementById("auth-email");
+            const passEl = document.getElementById("auth-password");
+            if (!emailEl || !passEl) return;
 
-        if (!email || !pass) return alert("Wprowadź dane!");
+            const email = emailEl.value.trim();
+            const pass = passEl.value;
 
-        if (currentAuthMode === "register") {
-            createUserWithEmailAndPassword(auth, email, pass)
-                .then(() => alert("Konto stworzone pomyślnie! Witamy w drop-strefie."))
-                .catch(err => alert("Błąd rejestracji: " + err.message));
-        } else {
-            signInWithEmailAndPassword(auth, email, pass)
-                .then(() => alert("Pomyślnie zalogowano!"))
-                .catch(err => alert("Błąd logowania: " + err.message));
-        }
-    });
+            if (!email || !pass) return alert("Wprowadź dane!");
+
+            if (currentAuthMode === "register") {
+                createUserWithEmailAndPassword(auth, email, pass)
+                    .then(() => alert("Konto stworzone pomyślnie! Witamy w drop-strefie."))
+                    .catch(err => alert("Błąd rejestracji: " + err.message));
+            } else {
+                signInWithEmailAndPassword(auth, email, pass)
+                    .then(() => alert("Pomyślnie zalogowano!"))
+                    .catch(err => alert("Błąd logowania: " + err.message));
+            }
+        });
+    }
 
     // Выход из системы
-    document.getElementById("btn-logout").addEventListener("click", () => {
-        signOut(auth).then(() => alert("Wylogowano z panelu."));
-    });
+    const btnLogout = document.getElementById("btn-logout");
+    if (btnLogout) {
+        btnLogout.addEventListener("click", () => {
+            signOut(auth)
+                .then(() => alert("Wylogowano z panelu."))
+                .catch(err => {
+                    console.error("Sign-out failed:", err);
+                    alert("Błąd wylogowania: " + err.message);
+                });
+        });
+    }
 
     // МОНИТОРИНГ СЕССИИ ЮЗЕРА
     const authGateBox = document.getElementById("auth-gate-box");
@@ -53,15 +71,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            authGateBox.style.display = "none";
-            accountDashboard.style.style.display = "grid";
-            userEmailDisplay.textContent = user.email;
+            if (authGateBox) authGateBox.style.display = "none";
+            if (accountDashboard) accountDashboard.style.display = "grid";
+            if (userEmailDisplay) userEmailDisplay.textContent = user.email;
             
             // Загружаем его личные заказы из Firestore
             fetchUserOrders(user.uid);
         } else {
-            authGateBox.style.display = "block";
-            accountDashboard.style.display = "none";
+            if (authGateBox) authGateBox.style.display = "block";
+            if (accountDashboard) accountDashboard.style.display = "none";
         }
     });
 
@@ -69,6 +87,11 @@ document.addEventListener("DOMContentLoaded", () => {
     async function fetchUserOrders(uid) {
         const feedWrapper = document.getElementById("user-orders-feed");
         const countBadge = document.getElementById("orders-count-badge");
+
+        if (!feedWrapper) {
+            console.error("Cannot render orders: #user-orders-feed element not found");
+            return;
+        }
         
         try {
             // Делаем селекцию документов, где userId равен ID вошедшего юзера
@@ -80,12 +103,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="empty-orders-state">
                         <p>Brak dotychczasowych zamówień. Czas złapać pierwszy drop!</p>
                     </div>`;
-                countBadge.textContent = "0";
+                if (countBadge) countBadge.textContent = "0";
                 return;
             }
 
             feedWrapper.innerHTML = "";
-            countBadge.textContent = querySnapshot.size;
+            if (countBadge) countBadge.textContent = querySnapshot.size;
 
             querySnapshot.forEach((doc) => {
                 const order = doc.data();
