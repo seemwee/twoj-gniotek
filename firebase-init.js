@@ -3,7 +3,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA9AwC8-NSVPD-e3fpjq7cphquw-d80yHk",
@@ -12,13 +12,14 @@ const firebaseConfig = {
   storageBucket: "twoj-gniotek.firebasestorage.app",
   messagingSenderId: "70839458696",
   appId: "1:70839458696:web:8c2ce646fdce9218f6b83d",
-  measurementId: "G-HKW9ZJ9RQK"
+  measurementId: "G-HKW9ZJ9RQK",
+  databaseURL: "https://twoj-gniotek-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
 // Инициализация Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = getDatabase(app); // Realtime Database вместо Firestore
 
 // Экспортируем в глобальную область видимости для использования в других скриптах
 window.firebaseApp = app;
