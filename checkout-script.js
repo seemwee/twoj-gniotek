@@ -1,5 +1,5 @@
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { collection, addDoc, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { ref, push, set, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 let auth, db;
 let cart = JSON.parse(localStorage.getItem('jellyCart')) || [];
@@ -7,6 +7,8 @@ let currentUser = null;
 
 // Ждем инициализации Firebase
 function initCheckoutScript() {
+  console.log("initCheckoutScript called, firebaseReady:", window.firebaseReady);
+  
   if (!window.firebaseReady) {
     console.log("Checkout script: Waiting for Firebase initialization...");
     setTimeout(initCheckoutScript, 100);
@@ -17,6 +19,16 @@ function initCheckoutScript() {
   db = window.firebaseDb;
   
   console.log("Checkout script initialized with Firebase");
+  console.log("Auth:", auth);
+  console.log("DB:", db);
+  console.log("Auth type:", typeof auth);
+  console.log("DB type:", typeof db);
+  
+  if (!auth || !db) {
+    console.error("Firebase auth or db is not available!");
+    return;
+  }
+  
   setupCheckoutUI();
 }
 
@@ -32,11 +44,11 @@ function setupCheckoutUI() {
   // Загрузка данных пользователя для автозаполнения формы
   async function loadUserData(uid) {
     try {
-      const userDocRef = doc(db, "accounts", uid);
-      const userDoc = await getDoc(userDocRef);
+      const userRef = ref(db, 'accounts/' + uid);
+      const snapshot = await get(userRef);
       
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
         
         // Автозаполняем email
         const emailInput = document.getElementById('c-email');
@@ -100,14 +112,27 @@ function setupCheckoutUI() {
 
   // Отправка формы чекаута
   const checkoutForm = document.getElementById('checkout-form');
+  console.log("Checkout form found:", !!checkoutForm);
+  
   if (checkoutForm) {
       checkoutForm.addEventListener('submit', async (e) => {
           e.preventDefault();
+          console.log("Form submitted");
 
           // Проверяем авторизацию
+          console.log("Current user:", currentUser);
+          console.log("Auth object:", auth);
+          console.log("DB object:", db);
+          
           if (!currentUser) {
               alert('🔐 Musisz być zalogowany, aby złożyć zamówienie! Przejdź do strony konta.');
               window.location.href = 'account.html';
+              return;
+          }
+
+          // Проверяем что корзина не пуста
+          if (cart.length === 0) {
+              alert('🛒 Twój koszyk jest pusty!');
               return;
           }
 
@@ -124,12 +149,28 @@ function setupCheckoutUI() {
               name: document.getElementById('c-name').value,
               surname: document.getElementById('c-surname').value,
               phone: document.getElementById('c-phone').value,
-              status: 'Weryfikacja InPost'
+              status: 'nowy (nieopłacony)'
           };
 
+          console.log("Order data:", orderData);
+          console.log("DB is available:", !!db);
+
           try {
-              // Сохраняем заказ в Firestore
-              await addDoc(collection(db, "orders"), orderData);
+              // Сохраняем заказ в Realtime Database
+              console.log("Saving order to Realtime Database...");
+              console.log("User UID:", currentUser.uid);
+              
+              console.log("Calling push...");
+              console.log("Order data to save:", JSON.stringify(orderData, null, 2));
+              
+              // Пробуем записать заказ напрямую
+              console.log("Attempting to save order directly...");
+              const ordersRef = ref(db, 'orders');
+              const orderRef = push(ordersRef);
+              await set(orderRef, orderData);
+              console.log("Order saved with ID:", orderRef.key);
+              console.log("Full order ref:", orderRef);
+              console.log("Order saved successfully");
               
               // Сохраняем данные доставки в профиль пользователя
               const deliveryData = {
@@ -145,7 +186,10 @@ function setupCheckoutUI() {
                   parcelNumber: document.getElementById('c-parcel-number')?.value || ''
               };
               
-              await updateDoc(doc(db, "accounts", currentUser.uid), { deliveryData });
+              console.log("Saving delivery data...");
+              const userRef = ref(db, 'accounts/' + currentUser.uid);
+              await update(userRef, { deliveryData });
+              console.log("Delivery data saved");
 
               alert('🎉 Zamówienie złożone! Dziękujemy za zakup!');
               cart = [];
@@ -153,9 +197,13 @@ function setupCheckoutUI() {
               window.location.href = 'index.html';
           } catch (error) {
               console.error('Error saving order:', error);
-              alert('❌ Błąd podczas składania zamówienia. Spróbuj ponownie.');
+              console.error('Error code:', error.code);
+              console.error('Error message:', error.message);
+              alert('❌ Błąd podczas składania zamówienia: ' + error.message);
           }
       });
+  } else {
+      console.error("Checkout form not found!");
   }
 
   // Обновление корзины
