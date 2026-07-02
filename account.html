@@ -12,7 +12,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
-    <link rel="stylesheet" href="style.css?v=1.2">
+    <!-- Firebase Initialization - MUST BE LOADED FIRST -->
+    <script type="module" src="firebase-init.js?v=2.1"></script>
+    
+    <link rel="stylesheet" href="style.css?v=2.1">
 </head>
 <body class="jelly-universe">
 
@@ -94,68 +97,6 @@
     </main>
 
     <!-- ПОДКЛЮЧАЕМ СКРИПТЫ -->
-    <script type="module" src="account-script.js?v=1.2"></script>
-</body>
-</html>            </div>
-        </div>
-    </header>
-
-    <!-- ОСНОВНОЙ КОНТЕНТ АККАУНТА -->
-    <main class="account-main-wrapper">
-        <div class="jelly-container">
-            
-            <!-- БЛОК ВХОДА И РЕГИСТРАЦИИ (ПОКАЗЫВАЕТСЯ ЕСЛИ НЕ ЗАЛОГИНЕН) -->
-            <div id="auth-gate-box" class="jelly-product-card auth-page-card">
-                <div class="auth-toggle-tabs">
-                    <button id="tab-login-btn" class="auth-tab-btn active">Zaloguj się</button>
-                    <button id="tab-register-btn" class="auth-tab-btn">Rejestracja</button>
-                </div>
-
-                <div class="auth-inputs-group" style="margin-top: 30px;">
-                    <input type="email" id="auth-email" class="jelly-input" placeholder="Twój E-mail">
-                    <input type="password" id="auth-password" class="jelly-input" placeholder="Hasło (min. 6 znaków)" style="margin-top: 16px;">
-                    
-                    <button id="btn-execute-auth" class="jelly-btn-submit" style="margin-top: 24px;">Wejdź do bazy</button>
-                </div>
-            </div>
-
-            <!-- ЛИЧНЫЙ КАБИНЕТ (ПОКАЗЫВАЕТСЯ ЕСЛИ ЮЗЕР УЖЕ ВОШЕЛ) -->
-            <div id="account-dashboard" class="account-dashboard-grid" style="display: none;">
-                
-                <!-- Левая колонка: Инфо о юзере -->
-                <div class="jelly-product-card user-info-sidebar">
-                    <div class="user-avatar-avatar">🧸</div>
-                    <h2 id="user-email-display">user@gniotek.pl</h2>
-                    <span class="user-status-tag">Status: Stały Kupujący</span>
-                    
-                    <div class="user-stats-pills" style="margin-top: 24px;">
-                        <div class="stat-pill">Zrealizowane dropy: <strong id="orders-count-badge" style="color:var(--pink-jelly-deep)">0</strong></div>
-                    </div>
-
-                    <button id="btn-logout" class="jelly-btn-submit" style="background: var(--text-core); margin-top: 40px;">Wyloguj się</button>
-                </div>
-
-                <!-- Правая колонка: История заказов -->
-                <div class="jelly-product-card user-orders-main">
-                    <div class="dashboard-header-line">
-                        <h2>📋 Twoja Kapsuła Zamówień</h2>
-                        <p>Tutaj widzisz statusy swoich paczek z Chin</p>
-                    </div>
-
-                    <div id="user-orders-feed" class="orders-feed-wrapper">
-                        <!-- Сюда JS будет рендерить реальные заказы из Firestore -->
-                        <div class="empty-orders-state">
-                            <p>Brak dotychczasowych zamówień. Czas złapać pierwszy drop!</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-    </main>
-
-    <!-- ПОДКЛЮЧАЕМ СКРИПТЫ -->
-    <script type="module" src="account-script.js?v=1.1"></script>
+    <script type="module" src="account-script.js?v=2.1"></script>
 </body>
 </html>
