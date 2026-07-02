@@ -1,5 +1,5 @@
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc, updateDoc, increment, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { ref, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 let currentUser = null;
 let globalBaseCount = 0;    
@@ -32,7 +32,7 @@ function maskEmail(email) {
   return parts[0].substring(0, 2) + "***@" + parts[1];
 }
 
-// Загрузка таблицы лидеров с сортировкой на клиенте (чтобы обойти ошибку индексов Firestore)
+// Загрузка таблицы лидеров с сортировкой на клиенте
 async function loadLeaderboard() {
   const leaderboardBody = document.getElementById("leaderboard-body");
   const userStatusEl = document.getElementById("user-leaderboard-status");
@@ -40,18 +40,23 @@ async function loadLeaderboard() {
 
   try {
     console.log("Loading leaderboard...");
-    // Берем все документы из коллекции accounts без orderBy (индекс больше не нужен!)
-    const querySnapshot = await getDocs(collection(db, "accounts"));
+    // Берем все данные из Realtime Database
+    const accountsRef = ref(db, 'accounts');
+    const snapshot = await get(accountsRef);
     
     let usersList = [];
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      usersList.push({
-        id: docSnap.id,
-        email: data.email || "Anonim",
-        squishCount: Number(data.squishCount) || 0
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      Object.keys(data).forEach((userId) => {
+        const userData = data[userId];
+        usersList.push({
+          id: userId,
+          email: userData.email || "Anonim",
+          nickname: userData.nickname || userData.email || "Anonim",
+          squishCount: Number(userData.squishCount) || 0
+        });
       });
-    });
+    }
 
     console.log("Users loaded:", usersList.length);
 
@@ -65,13 +70,13 @@ async function loadLeaderboard() {
     // Рендерим ТОП-10
     usersList.forEach((user, index) => {
       const count = index + 1;
-      const displayEmail = maskEmail(user.email);
+      const displayName = user.nickname || maskEmail(user.email);
 
       if (count <= 10) {
         leaderboardHtml += `
           <tr style="border-bottom: 1px solid rgba(0,0,0,0.02); font-size: 0.95rem;">
             <td style="padding: 10px; font-weight: bold;">${count === 1 ? '🥇' : count === 2 ? '🥈' : count === 3 ? '🥉' : count}</td>
-            <td style="padding: 10px;">${displayEmail}</td>
+            <td style="padding: 10px;">${displayName}</td>
             <td style="padding: 10px; text-align: right; font-weight: bold; color: var(--pink-jelly-deep);">${user.squishCount}</td>
           </tr>
         `;
@@ -113,11 +118,11 @@ function setupAuthListener() {
 
     if (user) {
       console.log("Zalogowano jako:", user.email);
-      const userDocRef = doc(db, "accounts", user.uid);
+      const userRef = ref(db, 'accounts/' + user.uid);
       
-      getDoc(userDocRef).then((docSnapshot) => {
-        if (docSnapshot.exists()) {
-          const userData = docSnapshot.data();
+      get(userRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
           globalBaseCount = Number(userData.squishCount) || 0;
           
           if (squishCountEl) {
@@ -145,14 +150,21 @@ function setupClickListener() {
   const interactiveDumpling = document.getElementById('interactive-dumpling');
   const squishCountEl = document.getElementById('squish-count');
   
+  console.log("Setting up click listener, element found:", !!interactiveDumpling);
+  
   if (interactiveDumpling) {
-    interactiveDumpling.addEventListener('click', () => {
+    // Обработчик для кликов (работает на десктопе)
+    const handleSquish = (e) => {
+      e.preventDefault();
+      console.log("Squish clicked, current user:", currentUser);
+      
       if (!currentUser) {
         alert("Zaloguj się, aby zbierać ściski!");
         return;
       }
 
       localSessionClicks++;
+      console.log("Local session clicks:", localSessionClicks);
       
       if (squishCountEl) {
         squishCountEl.textContent = globalBaseCount + localSessionClicks;
@@ -173,13 +185,21 @@ function setupClickListener() {
       clearTimeout(saveTimeout);
       saveTimeout = setTimeout(async () => {
         const clicksToSubmit = localSessionClicks;
+        console.log("Saving clicks to Realtime Database:", clicksToSubmit);
 
         if (clicksToSubmit > 0 && currentUser) {
           try {
-            const userDocRef = doc(db, "accounts", currentUser.uid);
+            const userRef = ref(db, 'accounts/' + currentUser.uid);
+            const snapshot = await get(userRef);
             
-            await updateDoc(userDocRef, {
-              squishCount: increment(clicksToSubmit)
+            let currentCount = 0;
+            if (snapshot.exists()) {
+              const userData = snapshot.val();
+              currentCount = Number(userData.squishCount) || 0;
+            }
+            
+            await update(userRef, {
+              squishCount: currentCount + clicksToSubmit
             });
 
             globalBaseCount += clicksToSubmit;
@@ -192,7 +212,15 @@ function setupClickListener() {
           }
         }
       }, 2000);
-    });
+    };
+
+    // Добавляем обработчик для кликов (десктоп)
+    interactiveDumpling.addEventListener('click', handleSquish);
+    
+    // Добавляем обработчик для тач событий (мобильные)
+    interactiveDumpling.addEventListener('touchstart', handleSquish, { passive: false });
+  } else {
+    console.error("Interactive dumpling element not found!");
   }
 }
 
