@@ -1,5 +1,5 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { collection, getDocs, doc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 let auth, db;
 
@@ -56,9 +56,13 @@ function setupAccountUI() {
 
             try {
                 if (currentAuthMode === "register") {
+                    const nicknameInput = document.getElementById("auth-nickname");
+                    const nickname = nicknameInput ? nicknameInput.value.trim() : email.split('@')[0];
+                    
                     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-                    await setDoc(doc(db, "accounts", userCredential.user.uid), {
+                    await set(ref(db, 'accounts/' + userCredential.user.uid), {
                         email: email,
+                        nickname: nickname,
                         createdAt: new Date().toISOString(),
                         squishCount: 0,
                         cart: []
@@ -96,6 +100,9 @@ function setupAccountUI() {
     const accountDashboard = document.getElementById("account-dashboard");
     const userEmailDisplay = document.getElementById("user-email-display");
 
+    // Admin credentials
+    const ADMIN_EMAIL = "admin@twoj-gniotek.com";
+
     // Функция для принудительного обновления UI
     function updateUIForUser(user) {
         currentUserId = user.uid;
@@ -103,8 +110,42 @@ function setupAccountUI() {
         if (accountDashboard) accountDashboard.style.display = "grid";
         if (userEmailDisplay) userEmailDisplay.textContent = user.email;
         
+        // Show admin button if admin
+        if (user.email === ADMIN_EMAIL) {
+            showAdminButton();
+        }
+        
         fetchUserOrders(user.uid);
         console.log("UI updated for user:", user.email);
+    }
+
+    function showAdminButton() {
+        const statsPills = document.querySelector(".user-stats-pills");
+        if (statsPills && !document.getElementById("admin-panel-btn")) {
+            const adminBtn = document.createElement("a");
+            adminBtn.id = "admin-panel-btn";
+            adminBtn.href = "admin.html";
+            adminBtn.className = "stat-pill";
+            adminBtn.style.background = "var(--pink-jelly-deep)";
+            adminBtn.style.color = "white";
+            adminBtn.style.textDecoration = "none";
+            adminBtn.innerHTML = "🔐 Panel Admina";
+            statsPills.appendChild(adminBtn);
+        }
+    }
+
+    function getStatusClass(status) {
+        const statusLower = status.toLowerCase();
+        if (statusLower.includes('nowy') || statusLower.includes('nieopłacony')) {
+            return 'status-nowy';
+        } else if (statusLower.includes('potwierdzony') || statusLower.includes('opłacony')) {
+            return 'status-potwierdzony';
+        } else if (statusLower.includes('trakcie')) {
+            return 'status-wtrakcie';
+        } else if (statusLower.includes('gotowy')) {
+            return 'status-gotowy';
+        }
+        return '';
     }
 
     onAuthStateChanged(auth, (user) => {
@@ -125,10 +166,29 @@ function setupAccountUI() {
         if (!feedWrapper) return;
         
         try {
-            const q = query(collection(db, "orders"), where("userId", "==", uid));
-            const querySnapshot = await getDocs(q);
+            const ordersRef = ref(db, 'orders');
+            const snapshot = await get(ordersRef);
             
-            if (querySnapshot.empty) {
+            if (!snapshot.exists()) {
+                feedWrapper.innerHTML = `
+                    <div class="empty-orders-state">
+                        <p>Brak dotychczasowych zamówień. Czas złapać pierwszy drop!</p>
+                    </div>`;
+                if (countBadge) countBadge.textContent = "0";
+                return;
+            }
+
+            const allOrders = snapshot.val();
+            const userOrders = [];
+            
+            Object.keys(allOrders).forEach((orderId) => {
+                const order = allOrders[orderId];
+                if (order.userId === uid) {
+                    userOrders.push(order);
+                }
+            });
+
+            if (userOrders.length === 0) {
                 feedWrapper.innerHTML = `
                     <div class="empty-orders-state">
                         <p>Brak dotychczasowych zamówień. Czas złapać pierwszy drop!</p>
@@ -138,18 +198,21 @@ function setupAccountUI() {
             }
 
             feedWrapper.innerHTML = "";
-            if (countBadge) countBadge.textContent = querySnapshot.size;
+            if (countBadge) countBadge.textContent = userOrders.length;
 
-            querySnapshot.forEach((doc) => {
-                const order = doc.data();
+            userOrders.forEach((order) => {
                 const itemsHtml = order.items.map(i => `• <strong>${i.name}</strong> (${i.price.toFixed(2)} PLN)`).join("<br>");
+                
+                // Get status from order data or default
+                const status = order.status || 'Weryfikacja InPost';
+                const statusClass = getStatusClass(status);
 
                 const card = document.createElement("div");
                 card.className = "db-order-card";
                 card.innerHTML = `
                     <div class="order-card-top">
                         <span>Data: <strong>${order.date || 'Dziś'}</strong></span>
-                        <span class="order-status-badge">Weryfikacja InPost</span>
+                        <span class="order-status-badge ${statusClass}">${status}</span>
                     </div>
                     <div>
                         <div style="font-size:0.95rem; margin-bottom: 8px;">${itemsHtml}</div>
