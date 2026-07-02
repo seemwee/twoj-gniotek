@@ -669,8 +669,8 @@ body {
     }
 
     .interactive-squishy {
-        width: 100px;
-        height: 100px;
+        width: 150px;
+        height: 150px;
     }
 
     .asmr-crush-card {
@@ -687,7 +687,8 @@ body {
     }
 
     .interactive-ending {
-        padding: 60px 0;
+        padding: 80px 0;
+        min-height: 500px;
     }
 
     .squish-counter {
@@ -769,6 +770,8 @@ body {
     cursor: pointer;
     transition: transform 0.1s;
     position: relative;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .interactive-squishy img {
@@ -776,6 +779,8 @@ body {
     height: 100%;
     object-fit: contain;
     filter: drop-shadow(0 30px 50px rgba(255, 143, 163, 0.3));
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 
@@ -1138,17 +1143,37 @@ body {
     
     .checkout-page {
         padding: 100px 0 40px;
+        position: relative;
+        z-index: 10;
     }
     
     .checkout-cart-summary,
     .checkout-form-container {
         padding: 20px;
         border-radius: 25px;
+        position: relative;
+        z-index: 5;
     }
     
     .checkout-cart-summary h2,
     .checkout-form-container h2 {
         font-size: 1.4rem;
+    }
+    
+    .jelly-btn-submit {
+        position: relative;
+        z-index: 10;
+        margin-top: 20px;
+    }
+    
+    .form-section {
+        position: relative;
+        z-index: 5;
+    }
+    
+    .jelly-input {
+        position: relative;
+        z-index: 5;
     }
 }
 
