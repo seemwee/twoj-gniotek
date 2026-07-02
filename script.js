@@ -11,7 +11,8 @@ function createFloatingParticles() {
   const container = document.getElementById('particles-container');
   if (!container) return;
 
-  const particleCount = 15; // Reduced from 20 for better performance
+  // Reduced particle count for better performance
+  const particleCount = 8; 
   const colors = ['#ff8fa3', '#ff4d6d', '#93e1d8', '#ffd700', '#ff6b6b'];
   const fragment = document.createDocumentFragment();
 
@@ -20,17 +21,23 @@ function createFloatingParticles() {
     particle.className = 'particle';
     particle.style.cssText = `
       left: ${Math.random() * 100}%;
-      width: ${Math.random() * 10 + 5}px;
-      height: ${Math.random() * 10 + 5}px;
+      width: ${Math.random() * 8 + 4}px;
+      height: ${Math.random() * 8 + 4}px;
       background: ${colors[Math.floor(Math.random() * colors.length)]};
-      animation-delay: ${Math.random() * 15}s;
-      animation-duration: ${Math.random() * 10 + 10}s;
+      animation-delay: ${Math.random() * 10}s;
+      animation-duration: ${Math.random() * 8 + 8}s;
     `;
     fragment.appendChild(particle);
   }
   container.appendChild(fragment);
 }
-createFloatingParticles();
+
+// Defer particle creation for better initial load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', createFloatingParticles);
+} else {
+  setTimeout(createFloatingParticles, 100);
+}
 
 // --- SQUISHY SQUEEZE ANIMATION ---
 const jellyObject = document.getElementById('jelly-core-object');
@@ -181,7 +188,7 @@ if (document.querySelector(".visual-scroller-arena")) {
 // --- CONFETTI EFFECT FOR MYSTERY BOX ---
 function createConfetti() {
   const colors = ['#ff8fa3', '#ff4d6d', '#93e1d8', '#ffd700', '#ff6b6b'];
-  const confettiCount = 50;
+  const confettiCount = 30; // Reduced from 50 for mobile performance
   
   for (let i = 0; i < confettiCount; i++) {
     const confetti = document.createElement('div');
@@ -193,8 +200,9 @@ function createConfetti() {
       left: ${Math.random() * 100}vw;
       top: -20px;
       border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
-      z-index: 9999;
+      z-index: 1000;
       pointer-events: none;
+      touch-action: none;
     `;
     document.body.appendChild(confetti);
     
@@ -204,9 +212,21 @@ function createConfetti() {
       rotation: Math.random() * 720,
       duration: Math.random() * 2 + 1,
       ease: "power1.out",
-      onComplete: () => confetti.remove()
+      onComplete: () => {
+        confetti.remove();
+      }
     });
   }
+  
+  // Force cleanup after 5 seconds to prevent blocking
+  setTimeout(() => {
+    const allConfetti = document.querySelectorAll('[style*="position: fixed"]');
+    allConfetti.forEach(el => {
+      if (el.style.zIndex === '1000' || el.style.zIndex === '9999') {
+        el.remove();
+      }
+    });
+  }, 5000);
 }
 
 // --- SHOPPING BAG CONTROLLER ---
@@ -375,90 +395,107 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // --- SCROLL ANIMATIONS FOR NEW SECTIONS ---
-if (document.querySelector(".catalog-jelly-section") || document.querySelector(".interactive-ending")) {
-  if (window.innerWidth > 768) {
-    gsap.from(".jelly-product-card", {
-      scrollTrigger: {
-        trigger: ".catalog-jelly-section",
-        start: "top 80%",
-        end: "bottom 20%",
-        toggleActions: "play none none reverse"
-      },
-      y: 60,
-      opacity: 0,
-      stagger: 0.15,
-      duration: 0.7,
-      ease: "power3.out"
-    });
+// Defer scroll animations to prevent blocking initial scroll
+setTimeout(() => {
+  if (document.querySelector(".catalog-jelly-section") || document.querySelector(".interactive-ending")) {
+    const productCards = document.querySelectorAll(".jelly-product-card");
+    const catalogSection = document.querySelector(".catalog-jelly-section");
+    
+    if (window.innerWidth > 768 && productCards.length > 0 && catalogSection) {
+      gsap.from(".jelly-product-card", {
+        scrollTrigger: {
+          trigger: ".catalog-jelly-section",
+          start: "top 80%",
+          end: "bottom 20%",
+          toggleActions: "play none none reverse"
+        },
+        y: 60,
+        opacity: 0,
+        stagger: 0.1,
+        duration: 0.4,
+        ease: "power3.out"
+      });
 
-    gsap.from(".catalog-jelly-title", {
-      scrollTrigger: {
-        trigger: ".catalog-jelly-title",
-        start: "top 85%",
-        toggleActions: "play none none reverse"
-      },
-      y: 40,
-      opacity: 0,
-      duration: 0.6,
-      ease: "power3.out"
-    });
+      const catalogTitle = document.querySelector(".catalog-jelly-title");
+      if (catalogTitle) {
+        gsap.from(".catalog-jelly-title", {
+          scrollTrigger: {
+            trigger: ".catalog-jelly-title",
+            start: "top 85%",
+            toggleActions: "play none none reverse"
+          },
+          y: 40,
+          opacity: 0,
+          duration: 0.3,
+          ease: "power3.out"
+        });
+      }
 
-    gsap.from(".interactive-ending", {
-      scrollTrigger: {
-        trigger: ".interactive-ending",
-        start: "top 80%",
-        end: "bottom 20%",
-        toggleActions: "play none none reverse"
-      },
-      y: 50,
-      opacity: 0,
-      duration: 0.8,
-      ease: "power3.out"
-    });
-  } else {
-    gsap.from(".jelly-product-card", {
-      scrollTrigger: {
-        trigger: ".catalog-jelly-section",
-        start: "top 85%",
-        toggleActions: "play none none reverse"
-      },
-      y: 40,
-      opacity: 0,
-      stagger: 0.1,
-      duration: 0.5,
-      ease: "power2.out"
-    });
+      const interactiveEnding = document.querySelector(".interactive-ending");
+      if (interactiveEnding) {
+        gsap.from(".interactive-ending", {
+          scrollTrigger: {
+            trigger: ".interactive-ending",
+            start: "top 80%",
+            end: "bottom 20%",
+            toggleActions: "play none none reverse"
+          },
+          y: 50,
+          opacity: 0,
+          duration: 0.4,
+          ease: "power3.out"
+        });
+      }
+    } else {
+      if (productCards.length > 0 && catalogSection) {
+        gsap.from(".jelly-product-card", {
+          scrollTrigger: {
+            trigger: ".catalog-jelly-section",
+            start: "top 85%",
+            toggleActions: "play none none reverse"
+          },
+          y: 40,
+          opacity: 0,
+          stagger: 0.05,
+          duration: 0.3,
+          ease: "power2.out"
+        });
+      }
 
-    gsap.from(".interactive-squishy", {
-      scrollTrigger: {
-        trigger: ".catalog-jelly-section",
-        start: "top 85%",
-        toggleActions: "play none none reverse"
-      },
-      y: 40,
-      opacity: 0,
-      stagger: 0.1,
-      duration: 0.5,
-      ease: "power2.out"
-    });
+      const interactiveSquishy = document.querySelector(".interactive-squishy");
+      if (interactiveSquishy && catalogSection) {
+        gsap.from(".interactive-squishy", {
+          scrollTrigger: {
+            trigger: ".catalog-jelly-section",
+            start: "top 85%",
+            toggleActions: "play none none reverse"
+          },
+          y: 40,
+          opacity: 0,
+          stagger: 0.05,
+          duration: 0.3,
+          ease: "power2.out"
+        });
 
-    gsap.from(".interactive-squishy", {
-      scrollTrigger: {
-        trigger: ".interactive-ending",
-        start: "top 80%",
-        toggleActions: "play none none reverse"
-      },
-      scale: 0.5,
-      opacity: 0,
-      duration: 0.6,
-      ease: "back.out(1.5)"
-    });
+        gsap.from(".interactive-squishy", {
+          scrollTrigger: {
+            trigger: ".interactive-ending",
+            start: "top 80%",
+            toggleActions: "play none none reverse"
+          },
+          scale: 0.5,
+          opacity: 0,
+          duration: 0.3,
+          ease: "back.out(1.5)"
+        });
+      }
+    }
   }
-}
+}, 500);
 
 // --- INTERACTIVE PRODUCT CARDS ---
-const productCards = document.querySelectorAll('.jelly-product-card');
-productCards.forEach(card => {
+const interactiveProductCards = document.querySelectorAll('.jelly-product-card');
+interactiveProductCards.forEach(card => {
   const img = card.querySelector('.prod-img');
   if (img) {
     card.addEventListener('mouseenter', () => {
