@@ -1,30 +1,83 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { collection, addDoc, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyA9AwC8-NSVPD-e3fpjq7cphquw-d80yHk",
-  authDomain: "twoj-gniotek.firebaseapp.com",
-  projectId: "twoj-gniotek",
-  storageBucket: "twoj-gniotek.firebasestorage.app",
-  messagingSenderId: "70839458696",
-  appId: "1:70839458696:web:8c2ce646fdce9218f6b83d",
-  measurementId: "G-HKW9ZJ9RQK"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
+let auth, db;
 let cart = JSON.parse(localStorage.getItem('jellyCart')) || [];
 let currentUser = null;
 
-// Отслеживаем состояние авторизации
-onAuthStateChanged(auth, (user) => {
-  currentUser = user;
-});
+// Ждем инициализации Firebase
+function initCheckoutScript() {
+  if (!window.firebaseReady) {
+    console.log("Checkout script: Waiting for Firebase initialization...");
+    setTimeout(initCheckoutScript, 100);
+    return;
+  }
 
-document.addEventListener('DOMContentLoaded', () => {
+  auth = window.firebaseAuth;
+  db = window.firebaseDb;
+  
+  console.log("Checkout script initialized with Firebase");
+  setupCheckoutUI();
+}
+
+function setupCheckoutUI() {
+  // Отслеживаем состояние авторизации
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (user) {
+      loadUserData(user.uid);
+    }
+  });
+
+  // Загрузка данных пользователя для автозаполнения формы
+  async function loadUserData(uid) {
+    try {
+      const userDocRef = doc(db, "accounts", uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        
+        // Автозаполняем email
+        const emailInput = document.getElementById('c-email');
+        if (emailInput && userData.email) {
+          emailInput.value = userData.email;
+        }
+        
+        // Если есть сохраненные данные доставки, заполняем их
+        if (userData.deliveryData) {
+          const nameInput = document.getElementById('c-name');
+          const surnameInput = document.getElementById('c-surname');
+          const phoneInput = document.getElementById('c-phone');
+          const streetInput = document.getElementById('c-street');
+          const houseNumberInput = document.getElementById('c-house-number');
+          const apartmentInput = document.getElementById('c-apartment');
+          const postalCodeInput = document.getElementById('c-postal-code');
+          const cityInput = document.getElementById('c-city');
+          const deliverySelect = document.getElementById('c-delivery');
+          const parcelInput = document.getElementById('c-parcel-number');
+          
+          if (nameInput && userData.deliveryData.name) nameInput.value = userData.deliveryData.name;
+          if (surnameInput && userData.deliveryData.surname) surnameInput.value = userData.deliveryData.surname;
+          if (phoneInput && userData.deliveryData.phone) phoneInput.value = userData.deliveryData.phone;
+          if (streetInput && userData.deliveryData.street) streetInput.value = userData.deliveryData.street;
+          if (houseNumberInput && userData.deliveryData.houseNumber) houseNumberInput.value = userData.deliveryData.houseNumber;
+          if (apartmentInput && userData.deliveryData.apartment) apartmentInput.value = userData.deliveryData.apartment;
+          if (postalCodeInput && userData.deliveryData.postalCode) postalCodeInput.value = userData.deliveryData.postalCode;
+          if (cityInput && userData.deliveryData.city) cityInput.value = userData.deliveryData.city;
+          if (deliverySelect && userData.deliveryData.delivery) {
+            deliverySelect.value = userData.deliveryData.delivery;
+            // Триггерим change event чтобы показать поле номера paczkomatu
+            deliverySelect.dispatchEvent(new Event('change'));
+          }
+          if (parcelInput && userData.deliveryData.parcelNumber) parcelInput.value = userData.deliveryData.parcelNumber;
+        }
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
+  }
+
   // Логика переключения способов доставки на странице чекаута
   const deliverySelect = document.getElementById('c-delivery');
   const parcelContainer = document.getElementById('c-parcel-number-container');
@@ -34,7 +87,10 @@ document.addEventListener('DOMContentLoaded', () => {
       deliverySelect.addEventListener('change', () => {
           if (deliverySelect.value === 'inpost' || deliverySelect.value === 'orlen') {
               parcelContainer.style.display = 'block';
-              if (parcelInput) parcelInput.setAttribute('required', 'true');
+              if (parcelInput) {
+                  parcelInput.setAttribute('required', 'true');
+                  parcelInput.placeholder = 'Wpisz numer swojego paczkomatu';
+              }
           } else {
               parcelContainer.style.display = 'none';
               if (parcelInput) parcelInput.removeAttribute('required');
@@ -74,6 +130,22 @@ document.addEventListener('DOMContentLoaded', () => {
           try {
               // Сохраняем заказ в Firestore
               await addDoc(collection(db, "orders"), orderData);
+              
+              // Сохраняем данные доставки в профиль пользователя
+              const deliveryData = {
+                  name: document.getElementById('c-name').value,
+                  surname: document.getElementById('c-surname').value,
+                  phone: document.getElementById('c-phone').value,
+                  street: document.getElementById('c-street').value,
+                  houseNumber: document.getElementById('c-house-number').value,
+                  apartment: document.getElementById('c-apartment').value,
+                  postalCode: document.getElementById('c-postal-code').value,
+                  city: document.getElementById('c-city').value,
+                  delivery: document.getElementById('c-delivery').value,
+                  parcelNumber: document.getElementById('c-parcel-number')?.value || ''
+              };
+              
+              await updateDoc(doc(db, "accounts", currentUser.uid), { deliveryData });
 
               alert('🎉 Zamówienie złożone! Dziękujemy za zakup!');
               cart = [];
@@ -147,4 +219,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   updateCartLayout();
-});
+}
+
+// Запускаем инициализацию
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCheckoutScript);
+} else {
+  initCheckoutScript();
+}
