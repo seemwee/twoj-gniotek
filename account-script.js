@@ -1,29 +1,32 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, setDoc, query, where, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { collection, getDocs, doc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyA9AwC8-NSVPD-e3fpjq7cphquw-d80yHk",
-  authDomain: "twoj-gniotek.firebaseapp.com",
-  projectId: "twoj-gniotek",
-  storageBucket: "twoj-gniotek.firebasestorage.app",
-  messagingSenderId: "70839458696",
-  appId: "1:70839458696:web:8c2ce646fdce9218f6b83d",
-  measurementId: "G-HKW9ZJ9RQK"
-};
+let auth, db;
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Ждем инициализации Firebase
+function initAccountScript() {
+  if (!window.firebaseReady) {
+    console.log("Account script: Waiting for Firebase initialization...");
+    setTimeout(initAccountScript, 100);
+    return;
+  }
 
-document.addEventListener("DOMContentLoaded", () => {
+  auth = window.firebaseAuth;
+  db = window.firebaseDb;
+  
+  console.log("Account script initialized with Firebase");
+  setupAccountUI();
+}
+
+function setupAccountUI() {
     if (typeof lucide !== "undefined") lucide.createIcons();
 
-    // Переключение вкладок (Логин / Регистрация)
+    let currentUserId = null;
+
     const tabLoginBtn = document.getElementById("tab-login-btn");
     const tabRegisterBtn = document.getElementById("tab-register-btn");
     const btnExecuteAuth = document.getElementById("btn-execute-auth");
-    let currentAuthMode = "login"; // по умолчанию режим входа
+    let currentAuthMode = "login";
 
     if (tabLoginBtn && tabRegisterBtn && btnExecuteAuth) {
         tabLoginBtn.addEventListener("click", () => {
@@ -41,77 +44,87 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Экзекуция кнопки авторизации
     if (btnExecuteAuth) {
-        btnExecuteAuth.addEventListener("click", () => {
+        btnExecuteAuth.addEventListener("click", async () => {
             const email = document.getElementById("auth-email").value.trim();
             const pass = document.getElementById("auth-password").value;
 
             if (!email || !pass) return alert("Wprowadź dane!");
 
-            if (currentAuthMode === "register") {
-                createUserWithEmailAndPassword(auth, email, pass)
-                    .then(async (userCredential) => {
-                        // Создаем документ пользователя в Firestore
-                        await setDoc(doc(db, "accounts", userCredential.user.uid), {
-                            email: email,
-                            createdAt: new Date().toISOString(),
-                            squishCount: 0,
-                            cart: []
-                        });
-                        alert("Konto stworzone pomyślnie! Witamy w drop-strefie.");
-                        // Перезагружаем страницу чтобы показать дашборд
-                        setTimeout(() => location.reload(), 1000);
-                    })
-                    .catch(err => alert("Błąd rejestracji: " + err.message));
-            } else {
-                signInWithEmailAndPassword(auth, email, pass)
-                    .then(() => {
-                        alert("Pomyślnie zalogowano!");
-                        // Перезагружаем страницу чтобы показать дашборд
-                        setTimeout(() => location.reload(), 1000);
-                    })
-                    .catch(err => alert("Błąd logowania: " + err.message));
+            btnExecuteAuth.disabled = true;
+            btnExecuteAuth.textContent = "Przetwarzanie...";
+
+            try {
+                if (currentAuthMode === "register") {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+                    await setDoc(doc(db, "accounts", userCredential.user.uid), {
+                        email: email,
+                        createdAt: new Date().toISOString(),
+                        squishCount: 0,
+                        cart: []
+                    });
+                    alert("Konto stworzone pomyślnie! Witamy w drop-strefie.");
+                    // Принудительно переключаем UI
+                    updateUIForUser(userCredential.user);
+                } else {
+                    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+                    alert("Pomyślnie zalogowano!");
+                    // Принудительно переключаем UI
+                    updateUIForUser(userCredential.user);
+                }
+            } catch (err) {
+                console.error("Auth error:", err);
+                alert("Błąd: " + err.message);
+            } finally {
+                btnExecuteAuth.disabled = false;
+                btnExecuteAuth.textContent = currentAuthMode === "register" ? "Utwórz konto dropu" : "Zaloguj się";
             }
         });
     }
 
-    // Выход из системы
     const btnLogout = document.getElementById("btn-logout");
     if (btnLogout) {
         btnLogout.addEventListener("click", () => {
-            signOut(auth).then(() => alert("Wylogowano z panelu."));
+            signOut(auth).then(() => {
+                alert("Wylogowano z panelu.");
+                // UI переключится автоматически через onAuthStateChanged
+            });
         });
     }
 
-    // МОНИТОРИНГ СЕССИИ ЮЗЕРА
     const authGateBox = document.getElementById("auth-gate-box");
     const accountDashboard = document.getElementById("account-dashboard");
     const userEmailDisplay = document.getElementById("user-email-display");
 
+    // Функция для принудительного обновления UI
+    function updateUIForUser(user) {
+        currentUserId = user.uid;
+        if (authGateBox) authGateBox.style.display = "none";
+        if (accountDashboard) accountDashboard.style.display = "grid";
+        if (userEmailDisplay) userEmailDisplay.textContent = user.email;
+        
+        fetchUserOrders(user.uid);
+        console.log("UI updated for user:", user.email);
+    }
+
     onAuthStateChanged(auth, (user) => {
+        console.log("Auth state changed:", user ? "Logged in as " + user.email : "Logged out");
+        
         if (user) {
-            authGateBox.style.display = "none";
-            accountDashboard.style.display = "grid";
-            userEmailDisplay.textContent = user.email;
-            
-            // Загружаем его личные заказы из Firestore
-            fetchUserOrders(user.uid);
-            // Загружаем количество нажатий
-            fetchUserSquishCount(user.uid);
+            updateUIForUser(user);
         } else {
-            authGateBox.style.display = "block";
-            accountDashboard.style.display = "none";
+            currentUserId = null;
+            if (authGateBox) authGateBox.style.display = "block";
+            if (accountDashboard) accountDashboard.style.display = "none";
         }
     });
 
-    // ФУНКЦИЯ ВЫТЯГИВАНИЯ ЗАКАЗОВ ЮЗЕРА ИЗ FIRESTORE
     async function fetchUserOrders(uid) {
         const feedWrapper = document.getElementById("user-orders-feed");
         const countBadge = document.getElementById("orders-count-badge");
+        if (!feedWrapper) return;
         
         try {
-            // Делаем селекцию документов, где userId равен ID вошедшего юзера
             const q = query(collection(db, "orders"), where("userId", "==", uid));
             const querySnapshot = await getDocs(q);
             
@@ -120,17 +133,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="empty-orders-state">
                         <p>Brak dotychczasowych zamówień. Czas złapać pierwszy drop!</p>
                     </div>`;
-                countBadge.textContent = "0";
+                if (countBadge) countBadge.textContent = "0";
                 return;
             }
 
             feedWrapper.innerHTML = "";
-            countBadge.textContent = querySnapshot.size;
+            if (countBadge) countBadge.textContent = querySnapshot.size;
 
             querySnapshot.forEach((doc) => {
                 const order = doc.data();
-                
-                // Рендерим список купленных товаров в строчку
                 const itemsHtml = order.items.map(i => `• <strong>${i.name}</strong> (${i.price.toFixed(2)} PLN)`).join("<br>");
 
                 const card = document.createElement("div");
@@ -156,35 +167,11 @@ document.addEventListener("DOMContentLoaded", () => {
             feedWrapper.innerHTML = `<p style="color:red; text-align:center;">Błąd ładowania danych.</p>`;
         }
     }
+}
 
-    // ФУНКЦИЯ ВЫТЯГИВАНИЯ КОЛИЧЕСТВА НАЖАТИЙ ЮЗЕРА ИЗ FIRESTORE
-    async function fetchUserSquishCount(uid) {
-        try {
-            const userDocRef = doc(db, "accounts", uid);
-            const userDoc = await getDoc(userDocRef);
-            
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                const squishCount = userData.squishCount || 0;
-                
-                // Добавляем или обновляем badge для squish count
-                let squishBadge = document.getElementById("squish-count-badge");
-                if (!squishBadge) {
-                    const statsPills = document.querySelector(".user-stats-pills");
-                    if (statsPills) {
-                        const newBadge = document.createElement("div");
-                        newBadge.className = "stat-pill";
-                        newBadge.id = "squish-count-badge";
-                        newBadge.style.marginTop = "10px";
-                        newBadge.innerHTML = `Liczba ścisknięć: <strong style="color:var(--pink-jelly-deep)">${squishCount}</strong>`;
-                        statsPills.appendChild(newBadge);
-                    }
-                } else {
-                    squishBadge.innerHTML = `Liczba ścisknięć: <strong style="color:var(--pink-jelly-deep)">${squishCount}</strong>`;
-                }
-            }
-        } catch (error) {
-            console.error("Error fetching squish count:", error);
-        }
-    }
-});
+// Запускаем инициализацию
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAccountScript);
+} else {
+  initAccountScript();
+}
