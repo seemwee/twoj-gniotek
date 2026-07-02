@@ -1,5 +1,5 @@
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { ref, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 let auth, db;
 let currentUser = null;
@@ -28,12 +28,60 @@ function setupCartSync() {
     }
   });
 
-  // Загрузка корзины пользователя из Firestore
+  // Загрузка корзины пользователя из Realtime Database
   async function loadUserCart(uid) {
     try {
-      const userDocRef = doc(db, "accounts", uid);
-      const userDoc = await getDoc(userDocRef);
+      const userRef = ref(db, 'accounts/' + uid);
+      const snapshot = await get(userRef);
       
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        if (userData.cart) {
+          const cart = userData.cart;
+          localStorage.setItem('jellyCart', JSON.stringify(cart));
+          // Обновляем UI если функция доступна
+          if (window.updateCartLayout) {
+            window.updateCartLayout();
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error loading cart:", error);
+    }
+  }
+
+  // Сохранение корзины пользователя в Realtime Database
+  async function saveUserCart(uid, cart) {
+    try {
+      const userRef = ref(db, 'accounts/' + uid);
+      await update(userRef, { cart: cart });
+    } catch (error) {
+      console.error("Error saving cart:", error);
+    }
+  }
+
+  // Перехватываем изменения корзины
+  const originalSetItem = localStorage.setItem;
+  localStorage.setItem = function(key, value) {
+    originalSetItem.call(this, key, value);
+    
+    if (key === 'jellyCart' && currentUser) {
+      const cart = JSON.parse(value);
+      saveUserCart(currentUser.uid, cart);
+    }
+  };
+
+  // Делаем функции доступными глобально
+  window.loadUserCart = loadUserCart;
+  window.currentUser = () => currentUser;
+}
+
+// Запускаем инициализацию
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCartScript);
+} else {
+  initCartScript();
+}
       if (userDoc.exists()) {
         const userData = userDoc.data();
         if (userData.cart) {
