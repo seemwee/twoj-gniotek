@@ -1,5 +1,5 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 let auth, db;
 
@@ -49,7 +49,14 @@ function setupAccountUI() {
             const email = document.getElementById("auth-email").value.trim();
             const pass = document.getElementById("auth-password").value;
 
-            if (!email || !pass) return alert("Wprowadź dane!");
+            if (!email || !pass) {
+                if (window.showToast) {
+                    window.showToast("Wprowadź dane!", "error");
+                } else {
+                    alert("Wprowadź dane!");
+                }
+                return;
+            }
 
             btnExecuteAuth.disabled = true;
             btnExecuteAuth.textContent = "Przetwarzanie...";
@@ -67,18 +74,24 @@ function setupAccountUI() {
                         squishCount: 0,
                         cart: []
                     });
-                    alert("Konto stworzone pomyślnie! Witamy w drop-strefie.");
+                    if (window.showToast) {
+                        window.showToast("Konto stworzone pomyślnie! Witamy w drop-strefie!", "success");
+                    }
                     // Принудительно переключаем UI
                     updateUIForUser(userCredential.user);
                 } else {
                     const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-                    alert("Pomyślnie zalogowano!");
+                    if (window.showToast) {
+                        window.showToast("Pomyślnie zalogowano!", "success");
+                    }
                     // Принудительно переключаем UI
                     updateUIForUser(userCredential.user);
                 }
             } catch (err) {
                 console.error("Auth error:", err);
-                alert("Błąd: " + err.message);
+                if (window.showToast) {
+                    window.showToast("Błąd: " + err.message, "error");
+                }
             } finally {
                 btnExecuteAuth.disabled = false;
                 btnExecuteAuth.textContent = currentAuthMode === "register" ? "Utwórz konto dropu" : "Zaloguj się";
@@ -90,7 +103,11 @@ function setupAccountUI() {
     if (btnLogout) {
         btnLogout.addEventListener("click", () => {
             signOut(auth).then(() => {
-                alert("Wylogowano z panelu.");
+                if (window.showToast) {
+                    window.showToast("Wylogowano z panelu.", "success");
+                } else {
+                    alert("Wylogowano z panelu.");
+                }
                 // UI переключится автоматически через onAuthStateChanged
             });
         });
@@ -110,6 +127,9 @@ function setupAccountUI() {
         if (accountDashboard) accountDashboard.style.display = "grid";
         if (userEmailDisplay) userEmailDisplay.textContent = user.email;
         
+        // Load user nickname
+        loadUserNickname(user.uid);
+        
         // Show admin button if admin
         if (user.email === ADMIN_EMAIL) {
             showAdminButton();
@@ -117,6 +137,60 @@ function setupAccountUI() {
         
         fetchUserOrders(user.uid);
         console.log("UI updated for user:", user.email);
+    }
+
+    async function loadUserNickname(uid) {
+        try {
+            const userRef = ref(db, 'accounts/' + uid);
+            const snapshot = await get(userRef);
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                if (userData.nickname) {
+                    const nicknameInput = document.getElementById('user-nickname-input');
+                    if (nicknameInput) {
+                        nicknameInput.value = userData.nickname;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error loading user data:", error);
+        }
+    }
+
+    // Save nickname functionality
+    const btnSaveNickname = document.getElementById('btn-save-nickname');
+    if (btnSaveNickname) {
+        btnSaveNickname.addEventListener('click', async () => {
+            const nicknameInput = document.getElementById('user-nickname-input');
+            const nickname = nicknameInput ? nicknameInput.value.trim() : '';
+            
+            if (!nickname) {
+                if (window.showToast) {
+                    window.showToast("Wpisz nick!", "error");
+                }
+                return;
+            }
+            
+            if (!currentUserId) {
+                if (window.showToast) {
+                    window.showToast("Musisz być zalogowany!", "error");
+                }
+                return;
+            }
+            
+            try {
+                const userRef = ref(db, 'accounts/' + currentUserId);
+                await update(userRef, { nickname: nickname });
+                if (window.showToast) {
+                    window.showToast("Nick zapisany!", "success");
+                }
+            } catch (error) {
+                console.error("Error saving nickname:", error);
+                if (window.showToast) {
+                    window.showToast("Błąd zapisu: " + error.message, "error");
+                }
+            }
+        });
     }
 
     function showAdminButton() {
