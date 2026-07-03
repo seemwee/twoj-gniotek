@@ -13,14 +13,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- Firebase Initialization - MUST BE LOADED FIRST -->
-    <script type="module" src="firebase-init.js?v=4.2"></script>
+    <script type="module" src="firebase-init.js?v=4.4"></script>
     
-    <link rel="stylesheet" href="style.css?v=4.2">
+    <link rel="stylesheet" href="style.css?v=4.4">
 </head>
 <body class="jelly-universe">
 
     <div class="bg-overlay"></div>
+
+    <div class="toast-container" id="toast-container"></div>
 
     <div class="jelly-cursor" id="jelly-pointer"></div>
 
@@ -32,7 +33,6 @@
 
     <div class="floating-particles" id="particles-container"></div>
 
-    <!-- MKSYMALNIE ZARYSOWANA NAPKA-PODUSZKA -->
     <header class="jelly-nav">
       <div class="jelly-container header-flex">
           <div class="header-left-block">
@@ -76,6 +76,7 @@
         </div>
 
         <div class="jelly-viewport-stage">
+            
             <div class="jelly-object-wrapper">
                 <img src="pics/main-squishy-pink.png" id="jelly-core-object" class="jelly-render" alt="Pink Dumpling Squishy">
                 
@@ -84,18 +85,7 @@
                 <div class="squish-pointer ptr-left-bottom"><div class="ptr-line"></div><div class="ptr-label">🎀 SŁODKA BUZIA</div></div>
                 <div class="squish-pointer ptr-right-bottom"><div class="ptr-line"></div><div class="ptr-label">🔥 100% TIKTOK TREND</div></div>
             </div>
-        </div>
-
-        <div class="asmr-crush-card" id="crush-zone-overlay">
-            <div class="crush-grid">
-                <div class="crush-badge">🎮 INTERAKTYWNA STREFA</div>
-                <h2>Kliknij i ściskaj!</h2>
-                <p>Kliknij na gniotka, żeby go ścisnąć! Oglądaj jak wraca do pierwotnego kształtu. Super satysfakcjonujące!</p>
-                <div class="live-pressure-bar">
-                    <div class="p-bar-label">Poziom ściskania:</div>
-                    <div class="p-bar-track"><div class="p-bar-fill" id="pressure-fill"></div></div>
-                </div>
-            </div>
+            
         </div>
 
         <div class="jelly-scroll-indicator"><span></span></div>
@@ -107,7 +97,7 @@
                 <div class="mystery-title">
                     <span class="section-tag">🚀 BESTSELLERY Z CHIN</span>
                     <h2>Najpopularniejsze gniotki prosto z Azji!</h2>
-                    <p>Importujemy najlepsze sensoryczne zabawki z Chin. Wszystkie modele z TikTok!</p>
+                    <p>Importujemy najlepsze sensoryczne zabawki z Chin. Wszystkie models z TikTok!</p>
                 </div>
 
                 <div class="mystery-grid">
@@ -153,7 +143,6 @@
                         <h3>Basic Box</h3>
                         <p>3 losowe gniotki</p>
                         <div class="mystery-price">79,00 PLN</div>
-                        <!-- В качестве заглушки для боксов можно передать эмодзи в виде иконки или оставить пустым -->
                         <button class="jelly-buy-btn" data-name="Basic Box" data-price="79" data-img="📦">Do koszyka</button>
                     </div>
 
@@ -217,15 +206,18 @@
 
                     <div class="interactive-squishy-container">
                         <div class="interactive-squishy" id="interactive-dumpling">
-                            <img src="pics/main-squishy-pink.png" alt="Interactive Dumpling">
+                            <img src="pics/main-squishy-pink.png" id="jelly-interactive-render" alt="Interactive Squishy">
                         </div>
                         <div class="squish-counter">
                             <span>Liczba ścisknięć:</span>
                             <strong id="squish-count">0</strong>
                         </div>
+                        
+                        <div id="level-up-message" style="margin-top: 15px; font-family: 'Fredoka', sans-serif; font-size: 1.2rem; font-weight: 700; color: #4caf50; display: none; animation: slideDown 0.3s ease-out;">
+                            🎉 Brawo! Nowy Poziom: <span id="level-name">Nowicjusz</span>! 🚀
+                        </div>
                     </div>
 
-                    <!-- ТАБЛИЦА ЛИДЕРОВ -->
                     <div class="leaderboard-wrapper" style="margin-top: 40px; background: rgba(255,255,255,0.6); padding: 25px; border-radius: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.05); max-width: 500px; margin-left: auto; margin-right: auto; text-align: left;">
                         <h3 style="text-align: center; margin-bottom: 20px; font-family: 'Fredoka', sans-serif; color: var(--text-core);">🏆 TABELA LIDERÓW</h3>
                         
@@ -238,11 +230,9 @@
                                 </tr>
                             </thead>
                             <tbody id="leaderboard-body">
-                                <!-- Сюда JS загрузит ТОП-10 -->
-                            </tbody>
+                                </tbody>
                         </table>
 
-                        <!-- СТАТИСТИКА ТЕКУЩЕГО ИГРОКА -->
                         <div id="user-leaderboard-status" style="margin-top: 20px; padding-top: 15px; border-top: 2px dashed rgba(0,0,0,0.1); font-weight: bold; text-align: center; color: var(--pink-jelly-deep);">
                             Zaloguj się, aby zobaczyć swoje miejsce w tabeli!
                         </div>
@@ -291,7 +281,8 @@
         </footer>
     </div>
 
-    <script src="script.js?v=4.2"></script>
-    <script type="module" src="cart-script.js?v=4.2"></script>
-    <script type="module" src="squish-script.js?v=4.2"></script>
+    <script src="script.js?v=4.8.4"></script>
+    <script type="module" src="cart-script.js?v=4.5"></script>
+    <script type="module" src="squish-script.js?v=4.5"></script>
+</body>
 </html>
