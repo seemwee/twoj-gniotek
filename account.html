@@ -13,9 +13,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
     <!-- Firebase Initialization - MUST BE LOADED FIRST -->
-    <script type="module" src="firebase-init.js?v=4.2"></script>
+    <script type="module" src="firebase-init.js?v=4.4"></script>
     
-    <link rel="stylesheet" href="style.css?v=4.2">
+    <link rel="stylesheet" href="style.css?v=4.4">
     <style>
         .status-nowy { background: #ffe8ec; color: #e91e63; }
         .status-potwierdzony { background: #e8f5e9; color: #4caf50; }
@@ -26,6 +26,10 @@
 <body class="jelly-universe">
 
     <div class="bg-overlay"></div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
     <div class="cinema-overlay-grain"></div>
 
     <!-- ТЕКУЧИЕ БЛОБЫ НА ФОНЕ -->
@@ -76,6 +80,14 @@
                     <h2 id="user-email-display">user@gniotek.pl</h2>
                     <span class="user-status-tag">Status: Stały Kupujący</span>
                     
+                    <div style="margin-top: 20px;">
+                        <label style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted);">Twój Nick:</label>
+                        <div style="display: flex; gap: 10px; margin-top: 8px;">
+                            <input type="text" id="user-nickname-input" class="jelly-input" placeholder="Wpisz nick" style="flex: 1;">
+                            <button id="btn-save-nickname" class="jelly-btn-submit" style="width: auto; padding: 10px 20px; margin-top: 0;">Zapisz</button>
+                        </div>
+                    </div>
+                    
                     <div class="user-stats-pills" style="margin-top: 24px; display: flex; flex-wrap: wrap; gap: 10px;">
                         <div class="stat-pill">Zrealizowane dropy: <strong id="orders-count-badge" style="color:var(--pink-jelly-deep)">0</strong></div>
                     </div>
@@ -104,6 +116,6 @@
     </main>
 
     <!-- ПОДКЛЮЧАЕМ СКРИПТЫ -->
-    <script type="module" src="account-script.js?v=4.2"></script>
+    <script type="module" src="account-script.js?v=4.4"></script>
 </body>
 </html>
