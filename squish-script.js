@@ -1,11 +1,36 @@
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { ref, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+// === КОНФИГУРАЦИЯ УРОВНЕЙ СКВИША ===
+// 16 уровней (от 0 до 1 000 000+ кликов). Замени пути к картинкам (pics/...) на реальные файлы в твоем проекте.
+const SQUISH_LEVELS = [
+  { minClicks: 0,       name: "mochi",      img: "pics/lvls/1.png" },
+  { minClicks: 1000,    name: "Simple dimple ",    img: "pics/lvls/2.png" },
+  { minClicks: 5000,    name: "TABA ŁAPKA",   img: "pics/lvls/3.png" },
+  { minClicks: 15000,   name: "POP IT",      img: "pics/lvls/4.png" },
+  { minClicks: 30000,   name: "AKSOLOTL",          img: "pics/lvls/5.png" },
+  { minClicks: 50000,   name: "CZEKOLADA",        img: "pics/lvls/6.png" },
+  { minClicks: 75000,   name: "SUPER SER",      img: "pics/lvls/7.png" },
+  { minClicks: 100000,  name: "BUTTER",   img: "pics/lvls/8.png" },
+  { minClicks: 150000,  name: "DUMPLING", img: "pics/lvls/9.png" },
+  { minClicks: 200000,  name: "CHLEBEK",     img: "pics/lvls/10.png" },
+  { minClicks: 300000,  name: "NEE DOH",     img: "pics/lvls/11.png" },
+  { minClicks: 450000,  name: "BIG TRUSKAWKA",  img: "pics/lvls/12.png" },
+  { minClicks: 600000,  name: "BANANA XXL", img: "pics/lvls/13.png" },
+  { minClicks: 750000,  name: "MEGA BUTTER",     img: "pics/lvls/14.png" },
+  { minClicks: 900000,  name: "GOLDEN DUMPLING",  img: "pics/lvls/15.png" },
+  { minClicks: 1000000, name: "GODNESS DUMPLING",  img: "pics/lvls/16.png" }
+];
+
+// === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
 let currentUser = null;
 let globalBaseCount = 0;    
 let localSessionClicks = 0; 
 let saveTimeout = null;
 let auth, db;
+
+let currentLevelIndex = 0; // Запоминаем текущий уровень, чтобы отследить момент апа
+let messageTimeout = null; // Для таймера на 3 секунды
 
 // Ждем инициализации Firebase
 function initSquishScript() {
@@ -32,42 +57,55 @@ function maskEmail(email) {
   return parts[0].substring(0, 2) + "***@" + parts[1];
 }
 
-// Добавь эту переменную на самый верх файла к остальным let (к currentUser, globalBaseCount и т.д.)
-let levelUpTriggered = false; 
-let messageTimeout = null;
-
+// === УЛУЧШЕННАЯ ЛОГИКА АПГРЕЙДА УРОВНЯ ===
 function checkLevel() {
-  const img1 = document.getElementById('squishy-stage-1');
-  const img2 = document.getElementById('squishy-stage-2');
-  const msg = document.getElementById('level-up-message');
+  const squishImg = document.getElementById('jelly-interactive-render'); // ID из твоего HTML
+  const squishName = document.getElementById('squishy-name');             // Название над сквишем
+  const msg = document.getElementById('level-up-message');                // Твой блок уведомления
 
-  if (!img1 || !img2 || !msg) return;
+  if (!squishImg || !squishName || !msg) return;
 
   const totalClicks = globalBaseCount + localSessionClicks;
 
-  if (totalClicks >= 1000) {
-    img1.style.display = 'none';
-    img2.style.display = 'block';
-    
-    // Проверяем: если порог пройден, НО сообщение в этой сессии ЕЩЕ НЕ ПОКАЗЫВАЛОСЬ
-    if (!levelUpTriggered) {
-      levelUpTriggered = true; // Сразу блокируем повторные вызовы
-      msg.style.display = 'block';
-
-      // Удаляем сообщение ровно через 3 секунды
-      clearTimeout(messageTimeout);
-      messageTimeout = setTimeout(() => {
-        msg.style.display = 'none';
-      }, 3000);
+  // Рассчитываем, на каком уровне находится игрок
+  let targetLevelIndex = 0;
+  for (let i = SQUISH_LEVELS.length - 1; i >= 0; i--) {
+    if (totalClicks >= SQUISH_LEVELS[i].minClicks) {
+      targetLevelIndex = i;
+      break;
     }
-  } else {
-    // Если кликов меньше 1000 (например, зашел новый юзер с 0 кликов), сбрасываем всё назад
-    img1.style.display = 'block';
-    img2.style.display = 'none';
+  }
+
+  const currentLevel = SQUISH_LEVELS[targetLevelIndex];
+
+  // Меняем название, если перешли на новый уровень
+  if (squishName.textContent !== currentLevel.name) {
+    squishName.textContent = currentLevel.name;
+  }
+  
+  // Меняем картинку сквиша под уровень
+  if (squishImg.getAttribute('src') !== currentLevel.img) {
+    squishImg.src = currentLevel.img;
+  }
+
+  // Если уровень стал выше, чем был в текущей сессии — запускаем коммуникат
+  if (targetLevelIndex > currentLevelIndex) {
+    msg.style.display = 'block';
+
+    // Прячем коммуникат ровно через 3 секунды (3000 мс)
+    clearTimeout(messageTimeout);
+    messageTimeout = setTimeout(() => {
+      msg.style.display = 'none';
+    }, 3000);
+  } 
+  // Сброс, если зашел неавторизованный юзер или сбросились клики
+  else if (totalClicks === 0) {
     msg.style.display = 'none';
-    levelUpTriggered = false; 
     clearTimeout(messageTimeout);
   }
+
+  // Фиксируем текущий индекс для последующих сравнений
+  currentLevelIndex = targetLevelIndex;
 }
 
 // Загрузка таблицы лидеров
@@ -160,7 +198,9 @@ function setupAuthListener() {
             squishCountEl.textContent = globalBaseCount + localSessionClicks;
           }
         }
-        checkLevel(); // Проверяем уровень после загрузки данных игрока
+        // Чтобы плашка "Ура!" не вылезала сама по себе просто при первоначальном входе в аккаунт:
+        currentLevelIndex = 999; 
+        checkLevel(); 
         loadLeaderboard();
       }).catch((error) => {
         console.error("Error loading account data:", error);
@@ -171,9 +211,10 @@ function setupAuthListener() {
       console.log("Użytkownik niezalogowany");
       globalBaseCount = 0;
       localSessionClicks = 0;
+      currentLevelIndex = 0;
       if (squishCountEl) squishCountEl.textContent = "0";
       if (userStatusEl) userStatusEl.innerHTML = "Zaloguj się, aby zobaczyć swoje miejsce w tabeli!";
-      checkLevel(); // Сбрасываем картинки, если никто не залогинен
+      checkLevel();
       loadLeaderboard();
     }
   });
@@ -194,18 +235,24 @@ function setupClickListener() {
         if (window.showToast) {
           window.showToast("Zaloguj się, aby zbierać ściski!", "error");
         } else {
-          alert("Zaloguj się, aby zbierać ściski!");
+          alert("Zaloguj się, aby zbieraть ściski!");
         }
         return;
       }
       
-      localSessionClicks++;
+localSessionClicks++;
+
+// ДОВАВЬТЕ ЭТОТ БЛОК СЮДА:
+interactiveDumpling.classList.add('squeezed');
+setTimeout(() => {
+  interactiveDumpling.classList.remove('squeezed');
+}, 100); // Возвращаем форму gniotka обратно через 100мс
       
       if (squishCountEl) {
         squishCountEl.textContent = globalBaseCount + localSessionClicks;
       }
 
-      checkLevel(); // Моментально проверяем уровень при каждом клике!
+      checkLevel(); // Моментально проверяем уровень и меняем визуал на каждый клик!
 
       const userStatusEl = document.getElementById("user-leaderboard-status");
       if (userStatusEl) {
@@ -242,7 +289,7 @@ function setupClickListener() {
             localSessionClicks -= clicksToSubmit;
             
             console.log(`Zsynchronizowano! Łącznie: ${globalBaseCount}`);
-            checkLevel(); // На всякий случай проверяем после синхронизации с базой
+            checkLevel(); 
             loadLeaderboard(); 
           } catch (error) {
             console.error("Error saving squish count:", error);
