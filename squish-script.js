@@ -1,5 +1,5 @@
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { ref, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { ref, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 let currentUser = null;
 let globalBaseCount = 0;    
@@ -32,7 +32,45 @@ function maskEmail(email) {
   return parts[0].substring(0, 2) + "***@" + parts[1];
 }
 
-// Загрузка таблицы лидеров с сортировкой на клиенте
+// Добавь эту переменную на самый верх файла к остальным let (к currentUser, globalBaseCount и т.д.)
+let levelUpTriggered = false; 
+let messageTimeout = null;
+
+function checkLevel() {
+  const img1 = document.getElementById('squishy-stage-1');
+  const img2 = document.getElementById('squishy-stage-2');
+  const msg = document.getElementById('level-up-message');
+
+  if (!img1 || !img2 || !msg) return;
+
+  const totalClicks = globalBaseCount + localSessionClicks;
+
+  if (totalClicks >= 1000) {
+    img1.style.display = 'none';
+    img2.style.display = 'block';
+    
+    // Проверяем: если порог пройден, НО сообщение в этой сессии ЕЩЕ НЕ ПОКАЗЫВАЛОСЬ
+    if (!levelUpTriggered) {
+      levelUpTriggered = true; // Сразу блокируем повторные вызовы
+      msg.style.display = 'block';
+
+      // Удаляем сообщение ровно через 3 секунды
+      clearTimeout(messageTimeout);
+      messageTimeout = setTimeout(() => {
+        msg.style.display = 'none';
+      }, 3000);
+    }
+  } else {
+    // Если кликов меньше 1000 (например, зашел новый юзер с 0 кликов), сбрасываем всё назад
+    img1.style.display = 'block';
+    img2.style.display = 'none';
+    msg.style.display = 'none';
+    levelUpTriggered = false; 
+    clearTimeout(messageTimeout);
+  }
+}
+
+// Загрузка таблицы лидеров
 async function loadLeaderboard() {
   const leaderboardBody = document.getElementById("leaderboard-body");
   const userStatusEl = document.getElementById("user-leaderboard-status");
@@ -40,7 +78,6 @@ async function loadLeaderboard() {
 
   try {
     console.log("Loading leaderboard...");
-    // Берем все данные из Realtime Database
     const accountsRef = ref(db, 'accounts');
     const snapshot = await get(accountsRef);
     
@@ -58,16 +95,12 @@ async function loadLeaderboard() {
       });
     }
 
-    console.log("Users loaded:", usersList.length);
-
-    // Сортируем массив по убыванию кликов вручную
     usersList.sort((a, b) => b.squishCount - a.squishCount);
 
     let leaderboardHtml = "";
     let userRank = 0;
     let userClicks = 0;
 
-    // Рендерим ТОП-10
     usersList.forEach((user, index) => {
       const count = index + 1;
       const displayName = user.nickname || maskEmail(user.email);
@@ -82,7 +115,6 @@ async function loadLeaderboard() {
         `;
       }
 
-      // Проверяем текущего юзера во всем списке
       if (currentUser && user.id === currentUser.uid) {
         userRank = count;
         userClicks = user.squishCount;
@@ -91,7 +123,6 @@ async function loadLeaderboard() {
 
     leaderboardBody.innerHTML = leaderboardHtml || "<tr><td colspan='3' style='text-align:center; padding:10px;'>Brak danych</td></tr>";
 
-    // Обновляем статус текущего залогиненного игрока
     if (userStatusEl) {
       if (currentUser) {
         if (userRank > 0) {
@@ -129,9 +160,11 @@ function setupAuthListener() {
             squishCountEl.textContent = globalBaseCount + localSessionClicks;
           }
         }
+        checkLevel(); // Проверяем уровень после загрузки данных игрока
         loadLeaderboard();
       }).catch((error) => {
         console.error("Error loading account data:", error);
+        checkLevel();
         loadLeaderboard();
       });
     } else {
@@ -140,6 +173,7 @@ function setupAuthListener() {
       localSessionClicks = 0;
       if (squishCountEl) squishCountEl.textContent = "0";
       if (userStatusEl) userStatusEl.innerHTML = "Zaloguj się, aby zobaczyć swoje miejsce w tabeli!";
+      checkLevel(); // Сбрасываем картинки, если никто не залогинен
       loadLeaderboard();
     }
   });
@@ -153,24 +187,26 @@ function setupClickListener() {
   console.log("Setting up click listener, element found:", !!interactiveDumpling);
   
   if (interactiveDumpling) {
-    // Обработчик для кликов (работает на десктопе)
     const handleSquish = (e) => {
       e.preventDefault();
-      console.log("Squish clicked, current user:", currentUser);
       
       if (!currentUser) {
-        alert("Zaloguj się, aby zbierać ściski!");
+        if (window.showToast) {
+          window.showToast("Zaloguj się, aby zbierać ściski!", "error");
+        } else {
+          alert("Zaloguj się, aby zbierać ściski!");
+        }
         return;
       }
-
+      
       localSessionClicks++;
-      console.log("Local session clicks:", localSessionClicks);
       
       if (squishCountEl) {
         squishCountEl.textContent = globalBaseCount + localSessionClicks;
       }
 
-      // Быстрое визуальное обновление плашки под таблицей до ответа сервера
+      checkLevel(); // Моментально проверяем уровень при каждом клике!
+
       const userStatusEl = document.getElementById("user-leaderboard-status");
       if (userStatusEl) {
         const currentText = userStatusEl.innerText;
@@ -206,6 +242,7 @@ function setupClickListener() {
             localSessionClicks -= clicksToSubmit;
             
             console.log(`Zsynchronizowano! Łącznie: ${globalBaseCount}`);
+            checkLevel(); // На всякий случай проверяем после синхронизации с базой
             loadLeaderboard(); 
           } catch (error) {
             console.error("Error saving squish count:", error);
@@ -214,10 +251,7 @@ function setupClickListener() {
       }, 2000);
     };
 
-    // Добавляем обработчик для кликов (десктоп)
     interactiveDumpling.addEventListener('click', handleSquish);
-    
-    // Добавляем обработчик для тач событий (мобильные)
     interactiveDumpling.addEventListener('touchstart', handleSquish, { passive: false });
   } else {
     console.error("Interactive dumpling element not found!");
