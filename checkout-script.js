@@ -125,14 +125,22 @@ function setupCheckoutUI() {
           console.log("DB object:", db);
           
           if (!currentUser) {
-              alert('🔐 Musisz być zalogowany, aby złożyć zamówienie! Przejdź do strony konta.');
+              if (window.showToast) {
+                  window.showToast('🔐 Musisz być zalogowany, aby złożyć zamówienie!', 'error');
+              } else {
+                  alert('🔐 Musisz być zalogowany, aby złożyć zamówienie! Przejdź do strony konta.');
+              }
               window.location.href = 'account.html';
               return;
           }
 
           // Проверяем что корзина не пуста
           if (cart.length === 0) {
-              alert('🛒 Twój koszyk jest pusty!');
+              if (window.showToast) {
+                  window.showToast('🛒 Twój koszyk jest pusty!', 'error');
+              } else {
+                  alert('🛒 Twój koszyk jest pusty!');
+              }
               return;
           }
 
@@ -191,15 +199,23 @@ function setupCheckoutUI() {
               await update(userRef, { deliveryData });
               console.log("Delivery data saved");
 
-              alert('🎉 Zamówienie złożone! Dziękujemy za zakup!');
+              // Очищаем корзину и редиректим без alert на мобильных
               cart = [];
               localStorage.setItem('jellyCart', JSON.stringify(cart));
-              window.location.href = 'index.html';
+              
+              // Небольшая задержка для завершения операций
+              setTimeout(() => {
+                  window.location.href = 'index.html';
+              }, 100);
           } catch (error) {
               console.error('Error saving order:', error);
               console.error('Error code:', error.code);
               console.error('Error message:', error.message);
-              alert('❌ Błąd podczas składania zamówienia: ' + error.message);
+              if (window.showToast) {
+                  window.showToast('❌ Błąd podczas składania zamówienia: ' + error.message, 'error');
+              } else {
+                  alert('❌ Błąd podczas składania zamówienia: ' + error.message);
+              }
           }
       });
   } else {
