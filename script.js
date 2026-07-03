@@ -40,82 +40,84 @@ if (document.readyState === 'loading') {
 }
 
 // --- SQUISHY SQUEEZE ANIMATION ---
-const jellyObject = document.getElementById('jelly-core-object');
-if (jellyObject) {
-  jellyObject.addEventListener('click', () => {
-    gsap.to(jellyObject, {
-      scale: 0.6,
-      scaleX: 1.4,
-      scaleY: 0.5,
-      rotation: Math.random() * 20 - 10,
-      duration: 0.12,
-      ease: "power2.out",
-      onComplete: () => {
-        gsap.to(jellyObject, {
-          scale: 1,
-          scaleX: 1,
-          scaleY: 1,
-          rotation: 0,
-          duration: 0.6,
-          ease: "elastic.out(1, 0.3)"
+document.addEventListener("DOMContentLoaded", () => {
+  const jellyObject = document.getElementById('jelly-core-object');
+  if (jellyObject) {
+    jellyObject.addEventListener('click', () => {
+      gsap.to(jellyObject, {
+        scale: 0.6,
+        scaleX: 1.4,
+        scaleY: 0.5,
+        rotation: Math.random() * 20 - 10,
+        duration: 0.12,
+        ease: "power2.out",
+        onComplete: () => {
+          gsap.to(jellyObject, {
+            scale: 1,
+            scaleX: 1,
+            scaleY: 1,
+            rotation: 0,
+            duration: 0.6,
+            ease: "elastic.out(1, 0.3)"
+          });
+        }
+      });
+
+      const pressureFill = document.getElementById('pressure-fill');
+      if (pressureFill) {
+        gsap.to(pressureFill, {
+          width: '100%',
+          duration: 0.2,
+          ease: "power2.out",
+          onComplete: () => {
+            gsap.to(pressureFill, {
+              width: '30%',
+              duration: 0.8,
+              ease: "power2.out"
+            });
+          }
         });
       }
     });
 
-    const pressureFill = document.getElementById('pressure-fill');
-    if (pressureFill) {
-      gsap.to(pressureFill, {
-        width: '100%',
-        duration: 0.2,
-        ease: "power2.out",
-        onComplete: () => {
-          gsap.to(pressureFill, {
-            width: '30%',
-            duration: 0.8,
+    jellyObject.addEventListener('mouseenter', () => {
+      gsap.to(jellyObject, {
+        scale: 1.1,
+        rotation: -3,
+        duration: 0.4,
+        ease: "power2.out"
+      });
+    });
+
+    jellyObject.addEventListener('mouseleave', () => {
+      gsap.to(jellyObject, {
+        scale: 1,
+        rotation: 0,
+        duration: 0.4,
+        ease: "power2.out"
+      });
+    });
+
+    // Оптимизация: используем requestAnimationFrame для mousemove
+    let ticking = false;
+    document.addEventListener('mousemove', (e) => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const moveX = (e.clientX - window.innerWidth / 2) / 50;
+          const moveY = (e.clientY - window.innerHeight / 2) / 50;
+          gsap.to(jellyObject, {
+            x: moveX,
+            y: moveY,
+            duration: 0.5,
             ease: "power2.out"
           });
-        }
-      });
-    }
-  });
-
-  jellyObject.addEventListener('mouseenter', () => {
-    gsap.to(jellyObject, {
-      scale: 1.1,
-      rotation: -3,
-      duration: 0.4,
-      ease: "power2.out"
-    });
-  });
-
-  jellyObject.addEventListener('mouseleave', () => {
-    gsap.to(jellyObject, {
-      scale: 1,
-      rotation: 0,
-      duration: 0.4,
-      ease: "power2.out"
-    });
-  });
-
-  // Оптимизация: используем requestAnimationFrame для mousemove
-  let ticking = false;
-  document.addEventListener('mousemove', (e) => {
-    if (!ticking) {
-      window.requestAnimationFrame(() => {
-        const moveX = (e.clientX - window.innerWidth / 2) / 50;
-        const moveY = (e.clientY - window.innerHeight / 2) / 50;
-        gsap.to(jellyObject, {
-          x: moveX,
-          y: moveY,
-          duration: 0.5,
-          ease: "power2.out"
+          ticking = false;
         });
-        ticking = false;
-      });
-      ticking = true;
-    }
-  });
-}
+        ticking = true;
+      }
+    });
+  }
+});
 
 // --- INTELLIGENT JELLY MOUSE POINTER ---
 const cursor = document.getElementById('jelly-pointer');
@@ -167,8 +169,6 @@ if (document.querySelector(".visual-scroller-arena")) {
           stagger: 0.08,
           ease: "back.out(1.4)"
       }, 0.45)
-      .to("#crush-zone-overlay", { bottom: "4%", opacity: 1, ease: "power2.out" }, 0.6)
-      .to("#pressure-fill", { width: "100%", ease: "none" }, 0.8)
       .to("#jelly-core-object", {
           scale: 0.85,
           scaleX: 1.15,
@@ -176,13 +176,23 @@ if (document.querySelector(".visual-scroller-arena")) {
           rotation: 3,
           ease: "power2.inOut"
       }, 0.7)
-        .to("#jelly-core-object", {
-            scale: 1,
-            scaleX: 1,
-            scaleY: 1,
-            rotation: 0,
-            ease: "elastic.out(1, 0.5)"
-        }, 0.9);
+      .to("#jelly-core-object", {
+          scale: 1,
+          scaleX: 1,
+          scaleY: 1,
+          rotation: 0,
+          ease: "elastic.out(1, 0.5)"
+      }, 0.9);
+
+  // Безопасное добавление анимации для #crush-zone-overlay
+  if (document.getElementById("crush-zone-overlay")) {
+      arenaTimeline.to("#crush-zone-overlay", { bottom: "4%", opacity: 1, ease: "power2.out" }, 0.6);
+  }
+
+  // Безопасное добавление анимации для #pressure-fill
+  if (document.getElementById("pressure-fill")) {
+      arenaTimeline.to("#pressure-fill", { width: "100%", ease: "none" }, 0.8);
+  }
 }
 
 // --- CONFETTI EFFECT FOR MYSTERY BOX ---
@@ -295,7 +305,7 @@ function createButtonParticles(btn) {
   }
 }
 
-// --- СВЕРХ-УНИВЕРСАЛЬНАЯ ФУНКЦИЯ КОРЗИНЫ (РАБОТАЕТ НА ВСЕХ СТРАНИЦАХ) ---
+// --- СВЕРХ-УНИВЕРСАЛЬНАЯ ФУНКЦИЯ КОРЗИНЫ ---
 function updateCartLayout() {
   const bagCount = document.getElementById('bag-count');
   const cartItemsFlow = document.getElementById('jelly-cart-items') || document.getElementById('checkout-cart-items');
@@ -322,13 +332,10 @@ function updateCartLayout() {
       total += item.price;
       const row = document.createElement('div');
       
-      // Настраиваем разные классы строк для адаптива корзины
       const isCheckout = !!document.getElementById('checkout-cart-items');
       row.className = isCheckout ? 'checkout-cart-item' : 'cart-item-row';
       
       const imgTag = item.img ? `<img src="${item.img}" alt="${item.name}" class="cart-item-img">` : '<div class="cart-item-img" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:#fff;border-radius:8px;">📦</div>';
-
-      // Если мы на странице оформления заказа — добавляем кнопку удаления товара (крестик)
       const actionButton = isCheckout ? `<button class="checkout-remove-btn" data-index="${index}">✕</button>` : '';
 
       row.innerHTML = `
@@ -348,7 +355,6 @@ function updateCartLayout() {
       totalPriceEl.textContent = `${total.toFixed(2)} PLN`;
   }
 
-  // Навешиваем обработчики удаления товара для чекаута
   const removeButtons = document.querySelectorAll('.checkout-remove-btn');
   removeButtons.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -363,7 +369,6 @@ function updateCartLayout() {
 document.addEventListener('DOMContentLoaded', () => {
   updateCartLayout();
 
-  // Логика переключения способов доставки на странице чекаута
   const deliverySelect = document.getElementById('c-delivery');
   const parcelContainer = document.getElementById('c-parcel-number-container');
   const parcelInput = document.getElementById('c-parcel-number');
@@ -380,7 +385,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // Отправка формы чекаута
   const checkoutForm = document.getElementById('checkout-form');
   if (checkoutForm) {
       checkoutForm.addEventListener('submit', (e) => {
@@ -393,9 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-
 // --- SCROLL ANIMATIONS FOR NEW SECTIONS ---
-// Defer scroll animations to prevent blocking initial scroll
 setTimeout(() => {
   if (document.querySelector(".catalog-jelly-section") || document.querySelector(".interactive-ending")) {
     const productCards = document.querySelectorAll(".jelly-product-card");
@@ -586,5 +588,3 @@ if (interactiveDumpling && squishCountEl) {
     }
   });
 }
-
-//
