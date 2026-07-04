@@ -426,3 +426,24 @@ if (interactiveDumpling && squishCountEl) {
     }
   });
 }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const viewButtons = document.querySelectorAll('.btn-grid-view');
+  const grids = document.querySelectorAll('.mystery-grid');
+
+  viewButtons.forEach(button => {
+      button.addEventListener('click', () => {
+          viewButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+
+          const cols = button.getAttribute('data-cols');
+
+          grids.forEach(grid => {
+              grid.classList.remove('cols-1', 'cols-2', 'cols-3', 'cols-4');
+              grid.classList.add(`cols-${cols}`);
+          });
+      });
+  });
+});
+
