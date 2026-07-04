@@ -1,0 +1,22 @@
+{
+  "name": "twoj-gniotek",
+  "version": "1.0.0",
+  "description": "web store for polish shop of squishes with admin panel, mini games and Firebase realtime data base, in future will be remade with PostgreSQL",
+  "main": "account-script.js",
+  "scripts": {
+    "test": "jest --coverage"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "jest": {
+    "testEnvironment": "jsdom",
+    "roots": ["<rootDir>/tests"]
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.29.7",
+    "babel-jest": "^30.4.1",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1"
+  }
+}
