@@ -5,22 +5,23 @@ import { ref, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/fire
 // 16 уровней (от 0 до 1 000 000+ кликов). Замени пути к картинкам (pics/...) на реальные файлы в твоем проекте.
 const SQUISH_LEVELS = [
   { minClicks: 0,       name: "mochi",      img: "pics/lvls/1.png" },
-  { minClicks: 1000,    name: "Simple dimple ",    img: "pics/lvls/2.png" },
-  { minClicks: 5000,    name: "TABA ŁAPKA",   img: "pics/lvls/3.png" },
-  { minClicks: 15000,   name: "POP IT",      img: "pics/lvls/4.png" },
-  { minClicks: 30000,   name: "AKSOLOTL",          img: "pics/lvls/5.png" },
-  { minClicks: 50000,   name: "CZEKOLADA",        img: "pics/lvls/6.png" },
-  { minClicks: 75000,   name: "SUPER SER",      img: "pics/lvls/7.png" },
-  { minClicks: 100000,  name: "BUTTER",   img: "pics/lvls/8.png" },
-  { minClicks: 150000,  name: "DUMPLING", img: "pics/lvls/9.png" },
-  { minClicks: 200000,  name: "CHLEBEK",     img: "pics/lvls/10.png" },
-  { minClicks: 300000,  name: "NEE DOH",     img: "pics/lvls/11.png" },
-  { minClicks: 450000,  name: "BIG TRUSKAWKA",  img: "pics/lvls/12.png" },
-  { minClicks: 600000,  name: "BANANA XXL", img: "pics/lvls/13.png" },
-  { minClicks: 750000,  name: "MEGA BUTTER",     img: "pics/lvls/14.png" },
-  { minClicks: 900000,  name: "GOLDEN DUMPLING",  img: "pics/lvls/15.png" },
-  { minClicks: 1000000, name: "GODNESS DUMPLING",  img: "pics/lvls/16.png" }
+  { minClicks: 250,    name: "Simple dimple ",    img: "pics/lvls/2.png" },
+  { minClicks: 500,    name: "TABA ŁAPKA",   img: "pics/lvls/3.png" },
+  { minClicks: 750,   name: "POP IT",      img: "pics/lvls/4.png" },
+  { minClicks: 1000,   name: "AKSOLOTL",          img: "pics/lvls/5.png" },
+  { minClicks: 1250,   name: "CZEKOLADA",        img: "pics/lvls/6.png" },
+  { minClicks: 1500,   name: "CHLEBEK",      img: "pics/lvls/10.png" },
+  { minClicks: 1750,  name: "BUTTER",   img: "pics/lvls/8.png" },
+  { minClicks: 2000,  name: "DUMPLING", img: "pics/lvls/9.png" },
+  { minClicks: 2500,  name: "SUPER SER",     img: "pics/lvls/7.png" },
+  { minClicks: 3000,  name: "NEE DOH",     img: "pics/lvls/11.png" },
+  { minClicks: 4000,  name: "BIG TRUSKAWKA",  img: "pics/lvls/12.png" },
+  { minClicks: 5000,  name: "BANANA XXL", img: "pics/lvls/13.png" },
+  { minClicks: 7500,  name: "MEGA BUTTER",     img: "pics/lvls/14.png" },
+  { minClicks: 10000,  name: "GOLDEN DUMPLING",  img: "pics/lvls/15.png" },
+  { minClicks: 15000, name: "GODNESS DUMPLING",  img: "pics/lvls/16.png" }
 ];
+
 
 // === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
 let currentUser = null;
