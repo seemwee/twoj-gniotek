@@ -12,10 +12,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <script type="module" src="firebase-init.js?v=4.9"></script>
-    
-    <link rel="stylesheet" href="style.css?v=4.9">
+
+    <script type="module" src="firebase-init.js?v=4.9.5"></script>
+
+    <link rel="stylesheet" href="style.css?v=4.9.5">
 </head>
 <body class="jelly-universe">
 
@@ -91,6 +91,22 @@
         <div class="jelly-scroll-indicator"><span></span></div>
     </div>
 
+
+    <div class="marquee-container">
+        <div class="marquee-text">
+          <span>WIELKIE OTWARCIE</span>
+          <span>NAJPOPULARNIEJSZE GNIOTKI</span>
+          <span>GRAJ O NAGRODY NA DOLE STRONY</span>
+        </div>
+        <!-- Дубликат для бесшовности -->
+        <div class="marquee-text">
+          <span>WIELKIE OTWARCIE</span>
+          <span>NAJPOPULARNIEJSZE GNIOTKI</span>
+          <span>GRAJ O NAGRODY NA DOLE STRONY</span>
+        </div>
+      </div>
+
+
     <div class="scrollable-content">
         <section id="drop" class="mystery-box-section">
             <div class="jelly-container">
@@ -99,6 +115,17 @@
                     <h2>Najpopularniejsze gniotki prosto z Azji!</h2>
                     <p>Importujemy najlepsze sensoryczne zabawki z Chin. Wszystkie models z TikTok!</p>
                 </div>
+
+                <div class="grid-view-switcher">
+                    <span class="switcher-title">Widok:</span>
+                    <button class="btn-grid-view only-mobile" data-cols="1">1</button>
+                    <button class="btn-grid-view only-mobile active" data-cols="2">2</button>
+                    
+                    <button class="btn-grid-view only-desktop" data-cols="2">2</button>
+                    <button class="btn-grid-view only-desktop active" data-cols="3">3</button>
+                    <button class="btn-grid-view only-desktop" data-cols="4">4</button>
+                </div>
+                <br>
 
                 <div class="mystery-grid">
                     <div class="mystery-card mystery-premium">
@@ -112,7 +139,7 @@
 
                     <div class="mystery-card mystery-basic">
                         <div class="mystery-icon"><img src="pics/butter.png" alt=""></div>
-                        <h3>Salted BUTTER</h3>
+                        <h3>BUTTER</h3>
                         <p>Puszyste masło które viraluje na TikTok! Super miękki.</p>
                         <div class="mystery-price">40,00 PLN</div>
                         <button class="jelly-buy-btn" data-name="Salted BUTTER" data-price="40" data-img="pics/butter.png">Do koszyka</button>
@@ -125,7 +152,31 @@
                         <div class="mystery-price">75,00 PLN</div>
                         <button class="jelly-buy-btn" data-name="BANAN XXL" data-price="75" data-img="pics/banana-xxl.png">Do koszyka</button>
                     </div>
+                    <div class="mystery-card mystery-basic">
+                        <div class="mystery-icon"><img src="pics/needoh.png" alt=""></div>
+                        <h3>Nee Doh</h3>
+                        <p>NeeDoh, czyli ten legendarny gniotek z Twojego FYP! 💥</p>
+                        <div class="mystery-price">35,00 PLN</div>
+                        <button class="jelly-buy-btn" data-name="Nee Doh" data-price="35" data-img="pics/needoh.png">Do koszyka</button>
+                    </div>
+
+                    <div class="mystery-card mystery-basic">
+                        <div class="mystery-icon"><img src="pics/truskawka.png" alt=""></div>
+                        <h3>TRUSKAWKA XXL</h3>
+                        <p>Gigantyczna, truskawkowa bomba, która rządzi na TikToku! 🍓🔥</p>
+                        <div class="mystery-price">60,00 PLN</div>
+                        <button class="jelly-buy-btn" data-name="TRUSKAWKA XXL" data-price="60" data-img="pics/truskawka.png">Do koszyka</button>
+                    </div>
+
+                    <div class="mystery-card mystery-basic">
+                        <div class="mystery-icon"><img src="pics/chlebek.png" alt=""></div>
+                        <h3>CHLEBEK</h3>
+                        <p>Ultra-puchaty bochenek o niesamowitej plastyczności! 🍞✨.</p>
+                        <div class="mystery-price">25,00 PLN</div>
+                        <button class="jelly-buy-btn" data-name="CHLEBEK" data-price="25" data-img="pics/chlebek.png">Do koszyka</button>
+                    </div>
                 </div>
+                
             </div>
         </section>
 
@@ -294,8 +345,8 @@
         </footer>
     </div>
 
-    <script src="script.js?v=4.9.1"></script>
-    <script type="module" src="cart-script.js?v=4.9"></script>
-    <script type="module" src="squish-script.js?v=4.9"></script>
+    <script src="script.js?v=4.9.5"></script>
+    <script type="module" src="cart-script.js?v=4.9.5"></script>
+    <script type="module" src="squish-script.js?v=4.9.5"></script>
 </body>
 </html>
