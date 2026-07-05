@@ -615,3 +615,129 @@ body {
 .interactive-squishy.squeezed {
     transform: scale(0.82) !important;
 }
+
+/* бегущая строка */
+
+.marquee-container {
+    overflow: hidden; 
+    white-space: nowrap; 
+    background-color: var(--pink-jelly);
+    color: #000000;
+    padding: 10px 0;
+    font-family: 'Fredoka', sans-serif;
+    font-weight: bold;
+    font-size: 2rem;
+    display: flex; /* Выстраивает два текстовых блока друг за другом */
+  }
+  
+  .marquee-text {
+    display: flex;
+    flex-shrink: 0; /* Запрещает тексту сжиматься */
+    min-width: 100%; /* Гарантирует правильный расчет ширины */
+    align-items: center;
+    
+    /* 25s — скорость. Если хотите чуть быстрее, сделайте 20s, если медленнее — 30s */
+    animation: marquee-infinite 25s linear infinite; 
+  }
+  
+  .marquee-text span {
+    padding-right: 150px; /* Расстояние между фразами (можно крутить как хотите) */
+  }
+  
+  /* Анимация для бесконечного потока */
+  @keyframes marquee-infinite {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-100%); }
+  }
+
+ /* Базовые стили переключателя */
+.grid-view-switcher {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    justify-content: flex-start;
+    font-family: 'Fredoka', sans-serif;
+}
+
+.switcher-title {
+    color: var(--text-core);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.btn-grid-view {
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px solid transparent;
+    padding: 6px 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-core);
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.btn-grid-view.active {
+    background: #ffe8ec;
+    border-color: var(--pink-jelly-deep, #ff4a75); 
+    color: var(--pink-jelly-deep, #ff4a75);
+}
+
+/* --- ЛОГИКА ДЛЯ МОБИЛЬНЫХ (Экран меньше 768px) --- */
+@media (max-width: 767px) {
+    .only-desktop { display: none !important; } /* Прячем ПК-кнопки */
+
+    /* По дефолту на мобилке 2 колонки */
+    .mystery-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px;
+    }
+    
+    /* Переключение на мобилке */
+    .mystery-grid.cols-1 {
+        grid-template-columns: repeat(1, 1fr) !important;
+    }
+    .mystery-grid.cols-2 {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    .mystery-grid.cols-2 img{
+        width: 100%;
+    }
+    .mystery-grid.cols-2 {
+        height: 700px;
+    }
+    .mystery-grid.cols-2 p{
+        display: none;
+    }
+    .mystery-grid.cols-2 .mystery-price {
+        font-size: 20px;
+    }
+}
+
+/* --- ЛОГИКА ДЛЯ ПК (Экран от 768px и выше) --- */
+@media (min-width: 768px) {
+    .only-mobile { display: none !important; } /* Прячем мобильные кнопки */
+    .grid-view-switcher {
+        padding-left: 50px;
+    }
+    .mystery-grid {
+        gap: 20px;
+    }
+    
+    /* Переключение на ПК */
+    .mystery-grid.cols-2 {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    .mystery-grid.cols-3 {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+    .mystery-grid.cols-4 {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+    .mystery-grid.cols-4 img {
+        width: 100%;
+    }
+}
