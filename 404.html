@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 // Drop Zgubiony</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="stylesheet" href="style.css?v=4.9">
+
+    <style>
+        .error-page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .error-code {
+            font-size: 12vw;
+            font-weight: 800;
+            line-height: 0.9;
+            color: transparent;
+            -webkit-text-stroke: 3px var(--text-core);
+            font-family: 'Fredoka', sans-serif;
+            margin-bottom: 10px;
+        }
+
+        .error-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-core);
+            margin-bottom: 16px;
+        }
+
+        .error-desc {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 500px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+
+        .lost-squishy-wrapper {
+            width: 240px;
+            height: 240px;
+            margin-bottom: 40px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .lost-squishy-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 20px 40px rgba(255, 143, 163, 0.3));
+        }
+
+        .hint-badge {
+            background: var(--pink-jelly);
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 20px;
+            animation: errorPulse 2s infinite ease-in-out;
+        }
+
+        @keyframes errorPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+    </style>
+</head>
+<body class="jelly-universe">
+
+    <div class="bg-overlay"></div>
+    <div class="cinema-overlay-grain"></div>
+
+    <div class="blob-container">
+        <div class="jelly-blob jb-1"></div>
+        <div class="jelly-blob jb-2"></div>
+    </div>
+
+    <div class="error-page-container jelly-container">
+        <h1 class="error-code">404</h1>
+        <h2 class="error-title">Zgubiona strona! 💔</h2>
+        <p class="error-desc">Ta strona rozlała się jak stary gniotek albo nigdy nie istniała. Nie panikuj, możesz pougnatać tego przegranego gniotka poniżej!</p>
+
+        <span class="hint-badge">👇 Ściśnij mnie na pocieszenie!</span>
+        
+        <div class="lost-squishy-wrapper" id="lost-dumpling">
+            <img src="pics/lostdumpling.png" alt="Lost Squishy">
+        </div>
+
+        <a href="index.html" class="jelly-buy-btn" style="max-width: 280px; text-decoration: none; display: inline-block; line-height: 20px;">
+            Wróć do sklepu 🚀
+        </a>
+    </div>
+
+    <script>
+        // Интерактивное упругое сжатие для 404 сквиша
+        const lostDumpling = document.getElementById('lost-dumpling');
+        
+        if (lostDumpling && window.gsap) {
+            lostDumpling.addEventListener('click', () => {
+                gsap.to(lostDumpling, {
+                    scale: 0.65,
+                    scaleX: 1.35,
+                    scaleY: 0.55,
+                    rotation: Math.random() * 30 - 15,
+                    duration: 0.1,
+                    ease: "power2.out",
+                    onComplete: () => {
+                        gsap.to(lostDumpling, {
+                            scale: 1,
+                            scaleX: 1,
+                            scaleY: 1,
+                            rotation: 0,
+                            duration: 0.6,
+                            ease: "elastic.out(1, 0.4)"
+                        });
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
