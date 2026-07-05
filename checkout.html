@@ -1,22 +1,26 @@
 <!DOCTYPE html>
 <html lang="pl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zamówienie // TWOJ GNIOTEK</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Plus+Jakarta+Sans:wght@600;800&display=swap"
+        rel="stylesheet">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+
     <!-- Firebase Initialization - MUST BE LOADED FIRST -->
     <script type="module" src="firebase-init.js?v=4.4"></script>
-    
+
     <link rel="stylesheet" href="style.css?v=4.4">
 </head>
+
 <body class="jelly-universe">
 
     <div class="bg-overlay"></div>
@@ -30,10 +34,11 @@
             <a href="index.html" class="mega-nav-item">← Wróć do sklepu</a>
             <a href="checkout.html" class="jelly-bag-trigger">
                 <div class="bag-icon-wrapper">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="jelly-bag-icon">
-                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
-                        <path d="M3 6h18"/>
-                        <path d="M16 10a4 4 0 0 1-8 0"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="jelly-bag-icon">
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                        <path d="M3 6h18" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
                     </svg>
                     <span id="bag-count" class="jelly-bag-counter">0</span>
                 </div>
@@ -57,23 +62,30 @@
                 <!-- Checkout Form -->
                 <div class="checkout-form-container">
                     <h2>📝 Dane do wysyłki</h2>
-                    
+
                     <form id="checkout-form">
                         <div class="form-section">
                             <h4>👤 Dane osobowe</h4>
                             <input type="text" id="c-name" class="jelly-input" placeholder="Imię" required>
-                            <input type="text" id="c-surname" class="jelly-input" placeholder="Nazwisko" style="margin-top:12px;" required>
-                            <input type="email" id="c-email" class="jelly-input" placeholder="Email" style="margin-top:12px;" required>
-                            <input type="tel" id="c-phone" class="jelly-input" placeholder="Telefon (+48)" style="margin-top:12px;" required>
+                            <input type="text" id="c-surname" class="jelly-input" placeholder="Nazwisko"
+                                style="margin-top:12px;" required>
+                            <input type="email" id="c-email" class="jelly-input" placeholder="Email"
+                                style="margin-top:12px;" required>
+                            <input type="tel" id="c-phone" class="jelly-input" placeholder="Telefon (+48)"
+                                style="margin-top:12px;" required>
                         </div>
 
                         <div class="form-section">
                             <h4>📍 Adres dostawy</h4>
                             <input type="text" id="c-street" class="jelly-input" placeholder="Ulica" required>
-                            <input type="text" id="c-house-number" class="jelly-input" placeholder="Numer domu" style="margin-top:12px;" required>
-                            <input type="text" id="c-apartment" class="jelly-input" placeholder="Numer mieszkania (opcjonalnie)" style="margin-top:12px;">
-                            <input type="text" id="c-postal-code" class="jelly-input" placeholder="Kod pocztowy" style="margin-top:12px;" required>
-                            <input type="text" id="c-city" class="jelly-input" placeholder="Miasto" style="margin-top:12px;" required>
+                            <input type="text" id="c-house-number" class="jelly-input" placeholder="Numer domu"
+                                style="margin-top:12px;" required>
+                            <input type="text" id="c-apartment" class="jelly-input"
+                                placeholder="Numer mieszkania (opcjonalnie)" style="margin-top:12px;">
+                            <input type="text" id="c-postal-code" class="jelly-input" placeholder="Kod pocztowy"
+                                style="margin-top:12px;" required>
+                            <input type="text" id="c-city" class="jelly-input" placeholder="Miasto"
+                                style="margin-top:12px;" required>
                         </div>
 
                         <div class="form-section">
@@ -85,10 +97,19 @@
                                 <option value="orlen">Orlen Paczka</option>
                                 <option value="dpd">DPD Kurier</option>
                             </select>
-                            <div id="c-parcel-number-container" style="display: none; margin-top: 15px;">
-                                <input type="text" id="c-parcel-number" class="jelly-input" placeholder="Wpisz numer swojego paczkomatu">
-                            </div>
+                            <input type="text" id="c-parcel-number" class="jelly-input"
+                                placeholder="Wpisz numer swojego paczkomatu" style="margin-top: 15px;">
                         </div>
+                        <!-- БЛОК ДЛЯ ВВОДА ПРОМОКОДА -->
+                        <!-- <div class="promo-code-container"
+                            style="margin-top: 20px; padding: 20px; background: rgba(0,0,0,0.02); border-radius: 20px; display: flex; gap: 12px; align-items: center;">
+                            <input type="text" id="c-promo-input" class="jelly-input"
+                                placeholder="Kod promocyjny (np. TIKTOK20)" style="margin: 0; flex: 1;">
+                            <button type="button" id="btn-apply-promo" class="jelly-buy-btn"
+                                style="box-shadow: none; white-space: nowrap; padding: 12px 24px;">Zastosuj</button>
+                        </div>
+                        <div id="promo-status-message"
+                            style="font-size: 0.85rem; font-weight: 700; margin-top: 6px; padding-left: 10px;"></div> -->
 
                         <button type="submit" class="jelly-btn-submit">Złóż zamówienie</button>
                     </form>
@@ -100,4 +121,5 @@
     <script src="script.js?v=4.4"></script>
     <script type="module" src="checkout-script.js?v=4.4"></script>
 </body>
+
 </html>
